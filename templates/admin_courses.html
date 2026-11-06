@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Courses & Subjects | Admin Panel</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/user_style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_courses.css') }}">
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="sidebar-brand">Campus<span>Plus</span><span class="sidebar-tag">ADMIN PANEL</span></div>
+        <a href="/admin/dashboard" class="sidebar-link">📊 Overview</a>
+        <a href="/admin/role-requests" class="sidebar-link">🎓 Role Requests</a>
+        <a href="/admin/content" class="sidebar-link">📁 Content Moderation</a>
+        <a href="/admin/clubs" class="sidebar-link">🏛️ Clubs</a>
+        <a href="/admin/courses" class="sidebar-link active">📚 Courses & Subjects</a>
+        <a href="/admin/users" class="sidebar-link">👥 Users</a>
+        <a href="/admin/companies" class="sidebar-link">🏢 Companies</a>
+        <a href="/admin/logs" class="sidebar-link">📜 Admin Logs</a>
+        <div class="sidebar-footer"><a href="/admin/logout" class="logout-link">🚪 Log out</a></div>
+    </div>
+
+    <div class="main">
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flash-wrap">
+              {% for category, message in messages %}
+                <div class="flash-msg {% if category == 'success' %}msg-success{% else %}msg-danger{% endif %}">{{ message }}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <div class="main-header">
+            <div>
+                <h1>📚 Courses & Subjects</h1>
+                <p>{{ courses|length }} courses · {{ all_subjects|length }} subjects in the shared pool.</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn-add" onclick="openAddCourseModal()">+ Add Course</button>
+            </div>
+        </div>
+
+        {% for course in courses %}
+        <div class="course-item">
+            <div class="course-header" onclick="toggleCourse({{ course.id }})">
+                <div>
+                    <div class="course-title">{{ course.name }}</div>
+                    <div class="course-sub">{{ course.subjects|length }} subjects linked</div>
+                </div>
+                <div class="toggle-actions-wrapper">
+                    <div class="course-actions" onclick="event.stopPropagation();">
+                        <button class="icon-btn" onclick='openEditCourseModal({{ course.id }}, {{ course.name|tojson }})'>✏️</button>
+                        <form action="/admin/courses/{{ course.id }}/delete" method="POST"
+                              onsubmit="return confirm('Delete {{ course.name }}? This also removes its subject links.');" class="delete-form">
+                            <button type="submit" class="icon-btn danger">🗑️</button>
+                        </form>
+                    </div>
+                    <span class="course-toggle" id="toggle-{{ course.id }}">▾</span>
+                </div>
+            </div>
+
+            <div class="course-body" id="body-{{ course.id }}">
+                <div class="subject-tags">
+                    {% for subj in course.subjects %}
+                    <div class="subject-tag">
+                        {{ subj.name }}
+                        <form action="/admin/courses/{{ course.id }}/subjects/{{ subj.id }}/unlink" method="POST" style="display:inline;">
+                            <button type="submit" title="Remove from this course">✕</button>
+                        </form>
+                    </div>
+                    {% else %}
+                    <span class="empty-subject-notice">No subjects linked yet.</span>
+                    {% endfor %}
+                </div>
+
+                <!-- Link existing subject -->
+                <form action="/admin/courses/{{ course.id }}/subjects/link" method="POST" class="add-subject-row">
+                    <select name="subject_id" required>
+                        <option value="" disabled selected>Link an existing subject…</option>
+                        {% for subj in all_subjects %}
+                            {% if subj.id not in course.subject_ids %}
+                            <option value="{{ subj.id }}">{{ subj.name }}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                    <button type="submit">Link</button>
+                </form>
+
+                <button class="new-subject-toggle" onclick="toggleNewSubjectForm({{ course.id }})">
+                    + Create a brand new subject instead
+                </button>
+
+                <!-- Create + link new subject -->
+                <form action="/admin/courses/{{ course.id }}/subjects/create" method="POST"
+                      class="add-subject-row new-subj-form-hidden" id="new-subj-form-{{ course.id }}">
+                    <input type="text" name="subject_name" placeholder="New subject name" required>
+                    <button type="submit">Create & Link</button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+
+    </div>
+
+    <!-- Add/Edit Course Modal -->
+    <div class="modal-overlay" id="courseModal">
+        <div class="modal-box">
+            <div class="modal-title" id="courseModalTitle">Add Course</div>
+            <form id="courseForm" method="POST">
+                <div class="form-group">
+                    <label class="form-label">Course Name</label>
+                    <input type="text" name="name" id="f_course_name" class="form-input"
+                           placeholder="e.g. B.Tech Computer Science & Engineering" required>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" onclick="closeCourseModal()">Cancel</button>
+                    <button type="submit" class="btn-save">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+    function toggleCourse(id) {
+        document.getElementById('body-' + id).classList.toggle('open');
+        document.getElementById('toggle-' + id).classList.toggle('open');
+    }
+
+    function toggleNewSubjectForm(courseId) {
+        const form = document.getElementById('new-subj-form-' + courseId);
+        form.classList.toggle('new-subj-form-hidden');
+    }
+
+    const courseModal = document.getElementById('courseModal');
+    const courseForm  = document.getElementById('courseForm');
+    const courseTitle = document.getElementById('courseModalTitle');
+
+    function openAddCourseModal() {
+        courseTitle.textContent = 'Add Course';
+        courseForm.action = '/admin/courses/add';
+        courseForm.reset();
+        courseModal.classList.add('active');
+    }
+
+    function openEditCourseModal(id, name) {
+        courseTitle.textContent = 'Edit Course';
+        courseForm.action = '/admin/courses/' + id + '/edit';
+        document.getElementById('f_course_name').value = name;
+        courseModal.classList.add('active');
+    }
+
+    function closeCourseModal() {
+        courseModal.classList.remove('active');
+    }
+
+    courseModal.addEventListener('click', e => {
+        if (e.target === courseModal) closeCourseModal();
+    });
+    </script>
+
+</body>
+</html>

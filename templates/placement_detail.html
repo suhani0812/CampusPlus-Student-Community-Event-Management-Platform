@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ drive.role_title }} | CampusPlus Placements</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/user_style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/academics.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/placements.css') }}">
+</head>
+<body class="academics-app">
+    <nav class="acad-nav">
+        <div class="acad-nav-left">
+            <a href="/dashboard" class="acad-brand">Campus<span>Plus</span></a>
+            <div class="acad-breadcrumbs">
+                <a href="/dashboard">Dashboard</a>
+                <span class="separator">/</span>
+                <a href="{{ url_for('student.placements') }}">Placements</a>
+                <span class="separator">/</span>
+                <span class="current">{{ drive.role_title }}</span>
+            </div>
+        </div>
+        <div class="acad-nav-right">
+            {% if user_email %}
+            <div class="acad-user-chip">
+                <div class="acad-user-avatar">{{ user_email[0].upper() }}</div>
+                <span>{{ user_email.split('@')[0] }}</span>
+            </div>
+            {% endif %}
+            <a href="{{ url_for('student.placements') }}" class="acad-back-btn">← All Drives</a>
+        </div>
+    </nav>
+
+    <main class="acad-container placement-detail-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flash-wrap">
+              {% for category, message in messages %}
+                <div class="flash-msg {% if category == 'success' %}msg-success{% else %}msg-danger{% endif %}"><span>{{ message }}</span></div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <section class="placement-detail-hero">
+            <div class="placement-company-mark placement-company-mark-large">
+                {% if drive.company_logo_url %}
+                <img src="{{ drive.company_logo_url }}" alt="{{ drive.company_name }} logo">
+                {% else %}
+                <span aria-hidden="true">🏢</span>
+                {% endif %}
+            </div>
+            <div class="placement-detail-heading">
+                <div class="placement-company-name">{{ drive.company_name }}</div>
+                <h1>{{ drive.role_title }}</h1>
+                <div class="placement-detail-meta">
+                    <span>💰 {{ '%.2f'|format(drive.package_lpa|float) ~ ' LPA' if drive.package_lpa else 'Package not specified' }}</span>
+                    <span>🗓️ {{ drive.drive_date.strftime('%A, %B %d, %Y') if drive.drive_date else 'Drive date to be announced' }}</span>
+                    {% if drive.status == 'pending' %}
+                    <span class="placement-status pending">Pending review</span>
+                    {% else %}
+                    <span class="placement-status approved">Open drive</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="placement-detail-actions">
+                {% if drive.apply_link %}
+                <a class="placement-submit-button" href="{{ drive.apply_link }}" target="_blank" rel="noopener noreferrer">Apply now ↗</a>
+                {% endif %}
+                {% if drive.jd_file_url %}
+                <a class="placement-cancel-button" href="{{ drive.jd_file_url }}" target="_blank" rel="noopener noreferrer">View JD file ↗</a>
+                {% endif %}
+            </div>
+        </section>
+
+        <div class="placement-detail-layout">
+            <div class="placement-detail-main">
+                <section class="placement-detail-section">
+                    <h2>Job description</h2>
+                    <p class="placement-long-copy">{{ drive.jd_description or 'A full job description has not been provided. Check the eligibility details and attached JD, or contact the placement coordinator for more information.' }}</p>
+                </section>
+                <section class="placement-detail-section">
+                    <h2>Qualifications and eligibility</h2>
+                    <p class="placement-long-copy">{{ drive.eligibility or 'Eligibility details have not been provided.' }}</p>
+                </section>
+            </div>
+            <aside class="placement-detail-sidebar">
+                <section class="placement-detail-section">
+                    <h2>Company</h2>
+                    <p class="placement-sidebar-company">{{ drive.company_name }}</p>
+                    {% if drive.company_website %}
+                    <a href="{{ drive.company_website }}" target="_blank" rel="noopener noreferrer" class="placement-company-website">Visit company website ↗</a>
+                    {% endif %}
+                </section>
+                <section class="placement-detail-section">
+                    <h2>Drive information</h2>
+                    <dl class="placement-info-list">
+                        <div><dt>Role</dt><dd>{{ drive.role_title }}</dd></div>
+                        <div><dt>Package</dt><dd>{{ '%.2f'|format(drive.package_lpa|float) ~ ' LPA' if drive.package_lpa else 'Not specified' }}</dd></div>
+                        <div><dt>Drive date</dt><dd>{{ drive.drive_date.strftime('%b %d, %Y') if drive.drive_date else 'To be announced' }}</dd></div>
+                    </dl>
+                </section>
+            </aside>
+        </div>
+
+        {% if other_drives %}
+        <section class="placement-related">
+            <h2>More placement opportunities</h2>
+            <div class="placement-related-grid">
+                {% for other in other_drives %}
+                <a href="{{ url_for('student.placement_detail', drive_id=other.id) }}" class="placement-related-card">
+                    <span class="placement-company-name">{{ other.company_name }}</span>
+                    <strong>{{ other.role_title }}</strong>
+                    <span>{{ '%.2f'|format(other.package_lpa|float) ~ ' LPA' if other.package_lpa else 'Package not specified' }} · {{ other.drive_date.strftime('%b %d, %Y') if other.drive_date else 'Date TBA' }}</span>
+                </a>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+    </main>
+</body>
+</html>

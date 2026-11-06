@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Users | Admin Panel</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/user_style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_users.css') }}">
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="sidebar-brand">Campus<span>Plus</span><span class="sidebar-tag">ADMIN PANEL</span></div>
+        <a href="/admin/dashboard" class="sidebar-link">📊 Overview</a>
+        <a href="/admin/role-requests" class="sidebar-link">🎓 Role Requests</a>
+        <a href="/admin/content" class="sidebar-link">📁 Content Moderation</a>
+        <a href="/admin/clubs" class="sidebar-link">🏛️ Clubs</a>
+        <a href="/admin/courses" class="sidebar-link">📚 Courses & Subjects</a>
+        <a href="/admin/users" class="sidebar-link active">👥 Users</a>
+        <a href="/admin/companies" class="sidebar-link">🏢 Companies</a>
+        <a href="/admin/logs" class="sidebar-link">📜 Admin Logs</a>
+        <div class="sidebar-footer"><a href="/admin/logout" class="logout-link">🚪 Log out</a></div>
+    </div>
+
+    <div class="main">
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flash-wrap">
+              {% for category, message in messages %}
+                <div class="flash-msg {% if category == 'success' %}msg-success{% else %}msg-danger{% endif %}">{{ message }}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <div class="main-header">
+            <div>
+                <h1>👥 Users</h1>
+                <p>Monitor registered users, active roles, and manage access permissions.</p>
+            </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <form method="GET" action="/admin/users" class="filter-bar">
+            <div class="filter-group">
+                <label class="filter-label" for="search">Search by Name or Email</label>
+                <input type="text" name="search" id="search" value="{{ search or '' }}" placeholder="Search name or email..." class="filter-input">
+            </div>
+            <div class="filter-group">
+                <label class="filter-label" for="role">Filter by Role</label>
+                <select name="role" id="role" class="filter-select">
+                    <option value="">All Roles</option>
+                    <option value="student" {% if role_filter == 'student' %}selected{% endif %}>Student</option>
+                    <option value="club_head" {% if role_filter == 'club_head' %}selected{% endif %}>Club Head</option>
+                    <option value="placement_coordinator" {% if role_filter == 'placement_coordinator' %}selected{% endif %}>Placement Coordinator</option>
+                    <option value="admin" {% if role_filter == 'admin' %}selected{% endif %}>Admin</option>
+                </select>
+            </div>
+            <div class="filter-actions">
+                <a href="/admin/users" class="btn-reset">Reset</a>
+            </div>
+        </form>
+
+        <!-- Users List -->
+        <div class="users-table-container">
+            {% if users %}
+            <table class="users-table">
+                <thead>
+                    <tr>
+                        <th>User Info</th>
+                        <th>Joined</th>
+                        <th>Last Login</th>
+                        <th>Active Roles</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <td>
+                            <div class="user-name">{{ user.full_name or 'N/A' }}</div>
+                            <span class="user-email">{{ user.email }}</span>
+                        </td>
+                        <td>{{ user.created_at.strftime('%d %b %Y') }}</td>
+                        <td>
+                            {% if user.last_login %}
+                                {{ user.last_login.strftime('%d %b %Y, %I:%M %p') }}
+                            {% else %}
+                                <span class="no-login">Never</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="roles-container">
+                                {% set active_roles = roles_by_user.get(user.id, []) %}
+                                {% for r in active_roles %}
+                                <span class="role-pill pill-{{ r.role }}">
+                                    {% if r.role == 'student' %}
+                                        🎓 Student
+                                    {% elif r.role == 'club_head' %}
+                                        🏛️ Club Head ({{ r.club_name or 'Unknown Club' }})
+                                    {% elif r.role == 'placement_coordinator' %}
+                                        💼 Placement Coord
+                                    {% elif r.role == 'admin' %}
+                                        🛡️ Admin
+                                    {% else %}
+                                        👤 {{ r.role|replace('_', ' ')|title }}
+                                    {% endif %}
+                                    
+                                    <form action="/admin/users/roles/{{ r.role_id }}/revoke" method="POST" class="revoke-form"
+                                          onsubmit="return confirm('Are you sure you want to revoke the {{ r.role|replace('_', ' ')|title }} role from {{ user.email }}?');">
+                                        <button type="submit" class="revoke-btn" title="Revoke Role">✕</button>
+                                    </form>
+                                </span>
+                                {% else %}
+                                <span class="no-roles">No active roles</span>
+                                {% endfor %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <div class="empty-state" id="users-filter-empty" hidden>
+                <p>No users found matching the query.</p>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <p>No users found matching the query.</p>
+            </div>
+            {% endif %}
+        </div>
+
+    </div>
+
+    <!-- Undo Toast Notification -->
+    {% if undo_role_id %}
+    <div id="undo-toast" class="undo-toast">
+        <div class="toast-content">
+            <span>Revoked <strong>{{ undo_role_name|replace('_', ' ')|title }}</strong> role from <strong>{{ undo_user_email }}</strong>.</span>
+            <form action="/admin/users/roles/{{ undo_role_id }}/restore" method="POST" class="undo-form">
+                <button type="submit" class="undo-btn-toast">Undo</button>
+            </form>
+        </div>
+        <div class="toast-progress"></div>
+    </div>
+    <script>
+        // 10-second undo toast
+        setTimeout(function() {
+            var toast = document.getElementById('undo-toast');
+            if (toast) {
+                toast.classList.add('toast-hide');
+                setTimeout(function() {
+                    toast.remove();
+                }, 500);
+            }
+        }, 10000);
+    </script>
+    {% endif %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('search');
+            const roleSelect = document.getElementById('role');
+            const tableRows = Array.from(document.querySelectorAll('.users-table tbody tr'));
+            const emptyState = document.getElementById('users-filter-empty');
+
+            function filterTable() {
+                if (!searchInput || !roleSelect) return;
+
+                const query = searchInput.value.toLowerCase().trim();
+                const selectedRole = roleSelect.value;
+                let visibleCount = 0;
+
+                tableRows.forEach(row => {
+                    const nameEl = row.querySelector('.user-name');
+                    const emailEl = row.querySelector('.user-email');
+                    const name = nameEl ? nameEl.textContent.toLowerCase() : '';
+                    const email = emailEl ? emailEl.textContent.toLowerCase() : '';
+                    const rolePills = row.querySelectorAll('.role-pill');
+                    const matchesSearch = name.includes(query) || email.includes(query);
+
+                    let matchesRole = !selectedRole;
+                    if (selectedRole) {
+                        rolePills.forEach(pill => {
+                            if (pill.classList.contains('pill-' + selectedRole)) {
+                                matchesRole = true;
+                            }
+                        });
+                    }
+
+                    const isVisible = matchesSearch && matchesRole;
+                    row.hidden = !isVisible;
+                    if (isVisible) visibleCount += 1;
+                });
+
+                if (emptyState) {
+                    emptyState.hidden = visibleCount > 0;
+                }
+            }
+
+            if (searchInput) searchInput.addEventListener('input', filterTable);
+            if (roleSelect) roleSelect.addEventListener('change', filterTable);
+
+            const filterForm = document.querySelector('.filter-bar');
+            if (filterForm) {
+                filterForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    filterTable();
+                });
+            }
+            filterTable();
+        });
+    </script>
+</body>
+</html>

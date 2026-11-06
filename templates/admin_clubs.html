@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Clubs | Admin Panel</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/user_style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_clubs.css') }}">
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="sidebar-brand">Campus<span>Plus</span><span class="sidebar-tag">ADMIN PANEL</span></div>
+        <a href="/admin/dashboard" class="sidebar-link">📊 Overview</a>
+        <a href="/admin/role-requests" class="sidebar-link">🎓 Role Requests</a>
+        <a href="/admin/content" class="sidebar-link">📁 Content Moderation</a>
+        <a href="/admin/clubs" class="sidebar-link active">🏛️ Clubs</a>
+        <a href="/admin/courses" class="sidebar-link">📚 Courses & Subjects</a>
+        <a href="/admin/users" class="sidebar-link">👥 Users</a>
+        <a href="/admin/companies" class="sidebar-link">🏢 Companies</a>
+        <a href="/admin/logs" class="sidebar-link">📜 Admin Logs</a>
+        <div class="sidebar-footer"><a href="/admin/logout" class="logout-link">🚪 Log out</a></div>
+    </div>
+
+    <div class="main">
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flash-wrap">
+              {% for category, message in messages %}
+                <div class="flash-msg {% if category == 'success' %}msg-success{% else %}msg-danger{% endif %}">{{ message }}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <div class="main-header">
+            <div>
+                <h1>🏛️ Manage Clubs</h1>
+                <p>{{ clubs|length }} clubs registered on CampusPlus.</p>
+            </div>
+            <button class="btn-add" onclick="openAddModal()">+ Add Club</button>
+        </div>
+
+        <div class="club-grid">
+            {% for club in clubs %}
+            <div class="club-card">
+                <span class="club-cat cat-{{ club.category }}">{{ club.category }}</span>
+                <div class="club-name">{{ club.name }}</div>
+                <div class="club-desc">{{ club.description or 'No description added yet.' }}</div>
+                <div class="club-meta">
+                    {% if club.instagram_handle %}📸 {{ club.instagram_handle }}<br>{% endif %}
+                    {% if club.apply_link %}<a href="{{ club.apply_link }}" target="_blank">Apply Link →</a>{% endif %}
+                </div>
+                <div class="club-actions">
+                    <button class="btn-edit" onclick='openEditModal({{ club|tojson }})'>Edit</button>
+                    <form action="/admin/clubs/{{ club.id }}/delete" method="POST"
+                          onsubmit="return confirm('Delete {{ club.name }}? This cannot be undone.');" class="delete-form">
+                        <button type="submit" class="btn-delete delete-form-btn">Delete</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+    </div>
+
+    <!-- Add/Edit Modal -->
+    <div class="modal-overlay" id="clubModal">
+        <div class="modal-box">
+            <div class="modal-title" id="modalTitle">Add Club</div>
+            <form id="clubForm" method="POST">
+                <div class="form-group">
+                    <label class="form-label">Club Name</label>
+                    <input type="text" name="name" id="f_name" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Category</label>
+                    <select name="category" id="f_category" class="form-select" required>
+                        <option value="technical">Technical</option>
+                        <option value="cultural">Cultural</option>
+                        <option value="social">Social</option>
+                        <option value="sports">Sports</option>
+                        <option value="innovation">Innovation</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea name="description" id="f_description" class="form-textarea"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Requirements</label>
+                    <textarea name="requirements" id="f_requirements" class="form-textarea"
+                              placeholder="What the club looks for in members"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Instagram Handle</label>
+                    <input type="text" name="instagram_handle" id="f_instagram" class="form-input" placeholder="@clubname">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Application Link</label>
+                    <input type="url" name="apply_link" id="f_apply_link" class="form-input" placeholder="https://forms.gle/...">
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn-save">Save Club</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+    const modal     = document.getElementById('clubModal');
+    const form      = document.getElementById('clubForm');
+    const titleEl   = document.getElementById('modalTitle');
+
+    function openAddModal() {
+        titleEl.textContent = 'Add Club';
+        form.action = '/admin/clubs/add';
+        form.reset();
+        modal.classList.add('active');
+    }
+
+    function openEditModal(club) {
+        titleEl.textContent = 'Edit ' + club.name;
+        form.action = '/admin/clubs/' + club.id + '/edit';
+        document.getElementById('f_name').value = club.name || '';
+        document.getElementById('f_category').value = club.category || 'other';
+        document.getElementById('f_description').value = club.description || '';
+        document.getElementById('f_requirements').value = club.requirements || '';
+        document.getElementById('f_instagram').value = club.instagram_handle || '';
+        document.getElementById('f_apply_link').value = club.apply_link || '';
+        modal.classList.add('active');
+    }
+
+    function closeModal() {
+        modal.classList.remove('active');
+    }
+
+    modal.addEventListener('click', e => {
+        if (e.target === modal) closeModal();
+    });
+    </script>
+
+</body>
+</html>

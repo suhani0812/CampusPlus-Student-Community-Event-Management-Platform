@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage {{ club.name }} | CampusPlus</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/user_style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/academics.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/club_head_manage.css') }}">
+</head>
+<body class="academics-app">
+
+    <nav class="acad-nav">
+        <div class="acad-nav-left">
+            <a href="/dashboard" class="acad-brand">Campus<span>Plus</span></a>
+            <div class="acad-breadcrumbs">
+                <a href="/dashboard">Dashboard</a>
+                <span class="separator">/</span>
+                <a href="/clubs">Clubs</a>
+                <span class="separator">/</span>
+                <a href="/clubs/{{ club.id }}">{{ club.name }}</a>
+                <span class="separator">/</span>
+                <span class="current">Manage</span>
+            </div>
+        </div>
+        <div class="acad-nav-right">
+            <a href="/clubs/{{ club.id }}" class="acad-back-btn">← View Club Page</a>
+        </div>
+    </nav>
+
+    <div class="page-body">
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flash-wrap">
+              {% for category, message in messages %}
+                <div class="flash-msg {% if category == 'success' %}msg-success{% else %}msg-danger{% endif %}">{{ message }}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <div class="page-header">
+            <h1>🛠️ Manage {{ club.name }}</h1>
+            <p>Update your club's details, gallery, and events.</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="showTab('details', this)">📋 Details</button>
+            <button class="tab-btn" onclick="showTab('gallery', this)">🖼️ Gallery</button>
+            <button class="tab-btn" onclick="showTab('events', this)">🎉 Events</button>
+        </div>
+
+        <!-- ── Tab 1: Details ───────────────────── -->
+        <div class="tab-content active" id="tab-details">
+            <div class="card">
+                <div class="card-title">Club Information</div>
+                <form action="/club-head/{{ club.id }}/edit" method="POST" enctype="multipart/form-data">
+
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <textarea name="description" class="form-textarea">{{ club.description or '' }}</textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Member Requirements</label>
+                        <textarea name="requirements" class="form-textarea">{{ club.requirements or '' }}</textarea>
+                        <div class="form-hint">What you look for in new members — skills, attitude, commitment etc.</div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Instagram Handle</label>
+                            <input type="text" name="instagram_handle" class="form-input"
+                                   value="{{ club.instagram_handle or '' }}" placeholder="@clubname">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Application Link</label>
+                            <input type="url" name="apply_link" class="form-input"
+                                   value="{{ club.apply_link or '' }}" placeholder="https://forms.gle/...">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Logo</label>
+                            {% if club.logo_url %}
+                            <img src="{{ club.logo_url }}" class="current-img" alt="current logo">
+                            {% endif %}
+                            <input type="file" name="logo" class="form-input file-input-margin" accept="image/*"
+                                   onchange="previewImg(this, 'logoPreview')">
+                            <img id="logoPreview" class="img-preview">
+                            <input type="hidden" name="existing_logo_url" value="{{ club.logo_url or '' }}">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Banner Image</label>
+                            {% if club.banner_url %}
+                            <img src="{{ club.banner_url }}" class="current-img current-banner" alt="current banner">
+                            {% endif %}
+                            <input type="file" name="banner" class="form-input file-input-margin" accept="image/*"
+                                   onchange="previewImg(this, 'bannerPreview')">
+                            <img id="bannerPreview" class="img-preview">
+                            <input type="hidden" name="existing_banner_url" value="{{ club.banner_url or '' }}">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-save">Save Changes</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- ── Tab 2: Gallery ──────────────────── -->
+        <div class="tab-content" id="tab-gallery">
+            <div class="card">
+                <div class="card-title">Photo Gallery ({{ gallery|length }} photos)</div>
+
+                {% if gallery %}
+                <div class="gallery-grid">
+                    {% for photo in gallery %}
+                    <div>
+                        <div class="gallery-item">
+                            <img src="{{ photo.image_url }}" alt="{{ photo.caption or '' }}">
+                            <form action="/club-head/{{ club.id }}/gallery/{{ photo.id }}/delete" method="POST">
+                                <button type="submit" class="delete-photo-btn"
+                                        onclick="return confirm('Delete this photo?')">✕</button>
+                            </form>
+                        </div>
+                        {% if photo.caption %}
+                        <div class="caption">{{ photo.caption }}</div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state">No photos yet. Upload some below!</div>
+                {% endif %}
+
+                <form action="/club-head/{{ club.id }}/gallery/upload" method="POST" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label class="form-label">Upload Photo</label>
+                        <div class="upload-zone" onclick="document.getElementById('galleryFile').click()">
+                            <div class="upload-zone-icon">📷</div>
+                            <label class="upload-zone-label">Click to select an image</label>
+                            <input type="file" id="galleryFile" name="photo" accept="image/*" required
+                                   onchange="previewImg(this, 'galleryPreview'); this.form.querySelector('.upload-zone-label').textContent = this.files[0].name;">
+                        </div>
+                        <img id="galleryPreview" class="img-preview upload-preview">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Caption <span class="caption-note">(optional)</span></label>
+                        <input type="text" name="caption" class="form-input" placeholder="Describe this photo">
+                    </div>
+                    <button type="submit" class="btn-save">Upload Photo</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- ── Tab 3: Events ───────────────────── -->
+        <div class="tab-content" id="tab-events">
+            <div class="card">
+                <div class="card-title">Events ({{ events|length }})</div>
+
+                <button class="add-event-toggle" onclick="toggleAddEvent()">+ Add New Event</button>
+
+                <!-- Add event form -->
+                <div class="add-event-form card add-event-card" id="addEventForm">
+                    <div class="card-title">New Event</div>
+                    <form action="/club-head/{{ club.id }}/events/add" method="POST" enctype="multipart/form-data">
+
+                        <div class="form-group">
+                            <label class="form-label">Event Title</label>
+                            <input type="text" name="title" class="form-input" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Description</label>
+                            <textarea name="description" class="form-textarea"></textarea>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Type</label>
+                                <select name="type" class="form-select" required>
+                                    <option value="academic">Academic</option>
+                                    <option value="social">Social</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Location Type</label>
+                                <select name="location_type" class="form-select" required>
+                                    <option value="on_campus">On Campus</option>
+                                    <option value="off_campus">Off Campus</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Venue</label>
+                            <input type="text" name="venue" class="form-input" placeholder="e.g. MIT-WPU Auditorium">
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Start Date & Time</label>
+                                <input type="datetime-local" name="event_date" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">End Date & Time</label>
+                                <input type="datetime-local" name="end_date" class="form-input">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Registration Link <span class="caption-note">(optional)</span></label>
+                            <input type="url" name="registration_link" class="form-input" placeholder="https://forms.gle/...">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Event Poster <span class="caption-note">(optional)</span></label>
+                            <input type="file" name="poster" class="form-input" accept="image/*"
+                                   onchange="previewImg(this, 'posterPreview')">
+                            <img id="posterPreview" class="img-preview">
+                        </div>
+
+                        <div class="event-note-box">
+                            ⏳ Events are submitted for admin review before going live.
+                        </div>
+
+                        <button type="submit" class="btn-save">Submit Event</button>
+                    </form>
+                </div>
+
+                <!-- Existing events -->
+                {% if events %}
+                    {% for event in events %}
+                    <div class="event-item">
+                        <div class="event-info">
+                            <div class="event-title">{{ event.title }}</div>
+                            <div class="event-meta">
+                                {{ event.type.title() }} · {{ event.location_type.replace('_',' ').title() }}
+                                {% if event.venue %} · {{ event.venue }}{% endif %}<br>
+                                {% if event.event_date %}{{ event.event_date.strftime('%d %b %Y, %I:%M %p') }}{% else %}Date TBA{% endif %}
+                            </div>
+                        </div>
+                        <div class="event-action-group">
+                            <span class="status-badge badge-{{ event.status }}">
+                                {% if event.status == 'pending' %}⏳ Pending
+                                {% elif event.status == 'approved' %}✓ Approved
+                                {% else %}✕ Denied{% endif %}
+                            </span>
+                            <form action="/club-head/{{ club.id }}/events/{{ event.id }}/delete" method="POST"
+                                  onsubmit="return confirm('Delete this event?');">
+                                <button type="submit" class="btn-delete-event">Delete</button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">No events added yet.</div>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+    function showTab(tab, btn) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        document.getElementById('tab-' + tab).classList.add('active');
+        btn.classList.add('active');
+    }
+
+    function previewImg(input, previewId) {
+        const preview = document.getElementById(previewId);
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = e => { preview.src = e.target.result; preview.style.display = 'block'; };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function toggleAddEvent() {
+        const form = document.getElementById('addEventForm');
+        form.classList.toggle('open');
+    }
+    </script>
+
+</body>
+</html>

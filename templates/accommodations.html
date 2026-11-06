@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Accommodations | CampusPlus</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/user_style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/academics.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/accommodations.css') }}">
+</head>
+<body class="academics-app">
+
+    <!-- Top Navigation Bar with Direct Clickable Breadcrumbs -->
+    <nav class="acad-nav">
+        <div class="acad-nav-left">
+            <a href="/dashboard" class="acad-brand">Campus<span>Plus</span></a>
+            <div class="acad-breadcrumbs">
+                <a href="/dashboard">Dashboard</a>
+                <span class="separator">/</span>
+                <span class="current">Accommodations</span>
+            </div>
+        </div>
+        <div class="acad-nav-right">
+            {% if user_email %}
+            <div class="acad-user-chip">
+                <div class="acad-user-avatar">{{ user_email[0].upper() }}</div>
+                <span>{{ user_email.split('@')[0] }}</span>
+            </div>
+            {% endif %}
+            <a href="/dashboard" class="acad-back-btn">← Dashboard</a>
+        </div>
+    </nav>
+
+    <div class="acad-container">
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flash-wrap">
+              {% for category, message in messages %}
+                <div class="flash-msg {% if category == 'success' %}msg-success{% else %}msg-danger{% endif %}">
+                  <span>{{ message }}</span>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <!-- Hero Section -->
+        <div class="acad-hero" style="background: linear-gradient(135deg, #064e3b 0%, #047857 50%, #10b981 100%); box-shadow: 0 10px 30px -5px rgba(4, 120, 87, 0.35);">
+            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+                <div>
+                    <div class="acad-hero-badge">🏠 Campus Housing Network</div>
+                    <h1>Student Accommodations near MIT-WPU</h1>
+                    <p>Verified student hostels, PGs with meal plans, and shared flats within walking distance of Kothrud campus gates.</p>
+                </div>
+                <button class="acad-btn-primary" style="background: rgba(255,255,255,0.2); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.3); color: #fff;" onclick="openAddAccommModal()">
+                    <span>+</span> List a Property
+                </button>
+            </div>
+
+            <div class="acad-hero-stats">
+                <div class="acad-hero-stat-item">
+                    <span class="acad-hero-stat-num">{{ total_listings }}</span>
+                    <span class="acad-hero-stat-label">Verified Stays</span>
+                </div>
+                <div class="acad-hero-stat-item">
+                    <span class="acad-hero-stat-num">{{ pg_count }}</span>
+                    <span class="acad-hero-stat-label">PGs &amp; Co-Living</span>
+                </div>
+                <div class="acad-hero-stat-item">
+                    <span class="acad-hero-stat-num">{{ hostel_count }}</span>
+                    <span class="acad-hero-stat-label">Hostels</span>
+                </div>
+                <div class="acad-hero-stat-item">
+                    <span class="acad-hero-stat-num">{{ flat_count }}</span>
+                    <span class="acad-hero-stat-label">Shared Flats</span>
+                </div>
+                <div class="acad-hero-stat-item">
+                    <span class="acad-hero-stat-num">₹{{ min_rent }}</span>
+                    <span class="acad-hero-stat-label">Starting From/mo</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search Bar & Filters -->
+        <div class="acad-search-bar-wrap">
+            <div class="acad-search-input-group">
+                <span class="acad-search-icon">🔍</span>
+                <input type="text" id="accommSearchInput" class="acad-search-input" 
+                       placeholder="Search by area (Kothrud, Paud Road, Ideal Colony), landmark, or property name..." 
+                       oninput="filterAccommodations()">
+                <span class="acad-search-kbd">/</span>
+            </div>
+
+            <div style="display: flex; gap: 14px; flex-wrap: wrap; align-items: center; justify-content: space-between;">
+                <!-- Type Filter Pills -->
+                <div class="acad-filter-pills" id="accommTypeFilters">
+                    <button class="acad-pill active" onclick="setTypeFilter('all', this)">All Stays</button>
+                    <button class="acad-pill" onclick="setTypeFilter('pg', this)">🛏️ PGs ({{ pg_count }})</button>
+                    <button class="acad-pill" onclick="setTypeFilter('hostel', this)">🏨 Hostels ({{ hostel_count }})</button>
+                    <button class="acad-pill" onclick="setTypeFilter('flat', this)">🏢 Flats ({{ flat_count }})</button>
+                </div>
+
+                <!-- Budget Filter Pills -->
+                <div class="acad-filter-pills" id="accommBudgetFilters">
+                    <button class="acad-pill active" onclick="setBudgetFilter('all', this)">Any Budget</button>
+                    <button class="acad-pill" onclick="setBudgetFilter('under8k', this)">Under ₹8,000</button>
+                    <button class="acad-pill" onclick="setBudgetFilter('8to15k', this)">₹8k – ₹15k</button>
+                    <button class="acad-pill" onclick="setBudgetFilter('above15k', this)">₹15,000+</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Accommodations Grid -->
+        <div class="accomm-grid" id="accommGrid">
+            {% for a in accommodations %}
+            <div class="accomm-card" 
+                 data-title="{{ a.title|lower }}" 
+                 data-address="{{ a.address|lower }}" 
+                 data-type="{{ a.type }}" 
+                 data-rent="{{ a.rent|float }}">
+
+                <!-- Cover Image & Floating Badges -->
+                <div class="accomm-image-wrap">
+                    {% if a.cover_image %}
+                    <img src="{{ a.cover_image }}" alt="{{ a.title }}" loading="lazy">
+                    {% else %}
+                    <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 3rem;">🏠</div>
+                    {% endif %}
+                    <div class="accomm-image-overlay"></div>
+
+                    <!-- Type Badge -->
+                    <span class="accomm-type-pill {{ a.type }}">
+                        {{ a.type|title }}
+                    </span>
+
+                    <!-- Rent Pill -->
+                    <div class="accomm-rent-pill">
+                        ₹{{ "{:,.0f}".format(a.rent) }} <span>/ mo</span>
+                    </div>
+
+                    <!-- Rating Chip -->
+                    {% if a.review_count > 0 %}
+                    <div class="accomm-rating-chip">
+                        <span class="star-icon">★</span>
+                        <span>{{ a.avg_rating }}</span>
+                        <span style="color: var(--text-light); font-size: 0.7rem;">({{ a.review_count }})</span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Card Body -->
+                <div class="accomm-body">
+                    <h2 class="accomm-title">{{ a.title }}</h2>
+
+                    {% if a.status == 'pending' %}
+                    <div style="margin-bottom: 8px;">
+                        <span class="acad-status-pending">⏳ Pending Admin Verification</span>
+                    </div>
+                    {% endif %}
+
+                    <div class="accomm-address">
+                        <span>📍</span>
+                        <span>{{ a.address }}</span>
+                    </div>
+
+                    <div class="accomm-contact-box">
+                        <span>👤 {{ a.broker_name or 'Owner / Manager' }}</span>
+                        {% if a.broker_contact %}
+                        <span style="font-weight: 600; color: var(--text-main);">{{ a.broker_contact }}</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="accomm-card-actions">
+                        {% if a.broker_contact %}
+                        <a href="https://wa.me/{{ a.broker_contact|replace(' ','')|replace('+','')|replace('-','') }}?text=Hi%2C%20I%20saw%20your%20listing%20on%20CampusPlus%20for%20{{ a.title|urlencode }}" 
+                           target="_blank" rel="noopener" class="btn-whatsapp-chat" title="Chat on WhatsApp">
+                            <span>💬 WhatsApp</span>
+                        </a>
+                        {% endif %}
+                        <a href="/accommodations/{{ a.id }}" class="acad-btn-primary" style="flex: 1; justify-content: center; padding: 8px 14px; font-size: 0.84rem;">
+                            <span>View Details →</span>
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+            {% else %}
+            <div class="acad-empty-state" style="grid-column: 1 / -1;">
+                <div class="acad-empty-icon">🏠</div>
+                <h3 class="acad-empty-title">No accommodations listed yet</h3>
+                <p class="acad-empty-sub">Be the first to list a student hostel, PG, or flat near MIT-WPU.</p>
+                <button class="acad-btn-primary" onclick="openAddAccommModal()">+ List Property</button>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- No search matches -->
+        <div id="noAccommsMatch" class="acad-empty-state" style="display: none; margin-top: 24px;">
+            <div class="acad-empty-icon">🔎</div>
+            <h3 class="acad-empty-title">No matching stays found</h3>
+            <p class="acad-empty-sub">Try searching with a broader area term or reset your budget filters.</p>
+            <button class="acad-btn-primary" onclick="resetAccommFilters()">Clear Filters</button>
+        </div>
+
+    </div>
+
+    <!-- Add Accommodation Modal -->
+    <div class="acad-modal-backdrop" id="addAccommModal" onclick="closeAccommModalOnBackdrop(event)">
+        <div class="acad-modal-box">
+            <div class="acad-modal-header">
+                <div class="acad-modal-title">
+                    <span>🏠</span> List Accommodation
+                </div>
+                <button class="acad-modal-close-btn" onclick="closeAddAccommModal()">✕</button>
+            </div>
+
+            <form action="/accommodations/add" method="POST" enctype="multipart/form-data">
+                
+                <div class="acad-form-group">
+                    <label for="accType">Accommodation Type *</label>
+                    <select id="accType" name="type" class="acad-form-input" required>
+                        <option value="pg">Paying Guest (PG)</option>
+                        <option value="hostel">Hostel</option>
+                        <option value="flat">Apartment / Flat</option>
+                    </select>
+                </div>
+
+                <div class="acad-form-group">
+                    <label for="accTitle">Property Name / Title *</label>
+                    <input type="text" id="accTitle" name="title" class="acad-form-input" 
+                           placeholder="e.g. Stanza Living Munich House — Boys PG" required>
+                </div>
+
+                <div class="acad-form-group">
+                    <label for="accRent">Monthly Rent in INR (₹) *</label>
+                    <input type="number" id="accRent" name="rent" class="acad-form-input" 
+                           placeholder="e.g. 11000" min="1000" step="100" required>
+                </div>
+
+                <div class="acad-form-group">
+                    <label for="accAddress">Full Address &amp; Landmark *</label>
+                    <textarea id="accAddress" name="address" class="acad-form-textarea" 
+                              placeholder="e.g. Plot 14, Near MIT Back Gate, Paud Road, Kothrud, Pune - 411038" required></textarea>
+                </div>
+
+                <div class="acad-form-group">
+                    <label for="accLocationUrl">Google Maps Link (Optional)</label>
+                    <input type="url" id="accLocationUrl" name="location_url" class="acad-form-input" 
+                           placeholder="https://maps.google.com/?q=...">
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="acad-form-group">
+                        <label for="accBrokerName">Owner / Broker Name</label>
+                        <input type="text" id="accBrokerName" name="broker_name" class="acad-form-input" 
+                               placeholder="e.g. Ramesh Kulkarni">
+                    </div>
+                    <div class="acad-form-group">
+                        <label for="accBrokerContact">Phone / WhatsApp Number</label>
+                        <input type="text" id="accBrokerContact" name="broker_contact" class="acad-form-input" 
+                               placeholder="e.g. +91 98230 12345">
+                    </div>
+                </div>
+
+                <div class="acad-form-group">
+                    <label>Property Photos (Multiple images allowed)</label>
+                    <div class="acad-file-dropzone">
+                        <input type="file" name="images" multiple accept="image/*" onchange="handleAccommPhotosSelected(this)">
+                        <div class="acad-dropzone-icon">📷</div>
+                        <div class="acad-dropzone-text">Click or drag property photos here</div>
+                        <div class="acad-dropzone-hint">Upload bedroom, washroom, and common area photos</div>
+                        <div class="acad-selected-file-name" id="photosSelectedLabel"></div>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px;">
+                    <button type="button" class="acad-back-btn" onclick="closeAddAccommModal()">Cancel</button>
+                    <button type="submit" class="acad-btn-primary" style="background: #10b981;">Submit Listing</button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <script>
+    let activeType = 'all';
+    let activeBudget = 'all';
+
+    function setTypeFilter(type, btn) {
+        activeType = type;
+        document.querySelectorAll('#accommTypeFilters .acad-pill').forEach(p => p.classList.remove('active'));
+        if (btn) btn.classList.add('active');
+        filterAccommodations();
+    }
+
+    function setBudgetFilter(budget, btn) {
+        activeBudget = budget;
+        document.querySelectorAll('#accommBudgetFilters .acad-pill').forEach(p => p.classList.remove('active'));
+        if (btn) btn.classList.add('active');
+        filterAccommodations();
+    }
+
+    function filterAccommodations() {
+        const query = document.getElementById('accommSearchInput').value.trim().toLowerCase();
+        const cards = document.querySelectorAll('.accomm-card');
+        let visibleCount = 0;
+
+        cards.forEach(card => {
+            const title   = card.getAttribute('data-title') || '';
+            const address = card.getAttribute('data-address') || '';
+            const type    = card.getAttribute('data-type') || '';
+            const rent    = parseFloat(card.getAttribute('data-rent') || '0');
+
+            const matchQuery = !query || title.includes(query) || address.includes(query);
+            const matchType  = (activeType === 'all') || (type === activeType);
+
+            let matchBudget = true;
+            if (activeBudget === 'under8k') {
+                matchBudget = rent <= 8000;
+            } else if (activeBudget === '8to15k') {
+                matchBudget = rent > 8000 && rent <= 15000;
+            } else if (activeBudget === 'above15k') {
+                matchBudget = rent > 15000;
+            }
+
+            if (matchQuery && matchType && matchBudget) {
+                card.style.display = 'flex';
+                visibleCount++;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        const noMatch = document.getElementById('noAccommsMatch');
+        if (noMatch) {
+            noMatch.style.display = (visibleCount === 0 && cards.length > 0) ? 'flex' : 'none';
+        }
+    }
+
+    function resetAccommFilters() {
+        document.getElementById('accommSearchInput').value = '';
+        setTypeFilter('all', document.querySelector('#accommTypeFilters .acad-pill'));
+        setBudgetFilter('all', document.querySelector('#accommBudgetFilters .acad-pill'));
+    }
+
+    function openAddAccommModal() {
+        document.getElementById('addAccommModal').classList.add('open');
+    }
+
+    function closeAddAccommModal() {
+        document.getElementById('addAccommModal').classList.remove('open');
+    }
+
+    function closeAccommModalOnBackdrop(e) {
+        if (e.target === document.getElementById('addAccommModal')) {
+            closeAddAccommModal();
+        }
+    }
+
+    function handleAccommPhotosSelected(input) {
+        const label = document.getElementById('photosSelectedLabel');
+        if (input.files && input.files.length > 0) {
+            label.innerText = `✓ Selected ${input.files.length} photo(s)`;
+        } else {
+            label.innerText = '';
+        }
+    }
+
+    // Keyboard shortcut '/' to search
+    window.addEventListener('keydown', (e) => {
+        if (e.key === '/' && document.activeElement !== document.getElementById('accommSearchInput')) {
+            e.preventDefault();
+            document.getElementById('accommSearchInput').focus();
+        }
+    });
+    </script>
+
+</body>
+</html>

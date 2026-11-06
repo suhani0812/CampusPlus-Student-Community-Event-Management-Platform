@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clubs &amp; Communities | CampusPlus</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/user_style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/academics.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/clubs.css') }}">
+    <style>
+        .club-banner {
+            position: relative;
+            height: 120px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .club-banner img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .club-card {
+            border: 1.5px solid var(--border-color);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-sm);
+            background: #fff;
+            transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+            text-decoration: none;
+            color: inherit;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .club-card:hover {
+            transform: translateY(-4px);
+            border-color: #cbd5e1;
+            box-shadow: var(--shadow-xl);
+        }
+        .club-logo-wrap {
+            position: absolute;
+            bottom: -20px;
+            left: 20px;
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            background: #fff;
+            border: 3px solid #fff;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.14);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            overflow: hidden;
+        }
+        .club-body {
+            padding: 30px 20px 18px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .club-name {
+            font-family: var(--font-heading);
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text-main);
+            line-height: 1.35;
+        }
+        .club-desc {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.55;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .club-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: auto;
+            padding-top: 14px;
+            border-top: 1px solid #f1f5f9;
+        }
+        .club-arrow {
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 0.85rem;
+            transition: transform 0.18s ease;
+        }
+        .club-card:hover .club-arrow {
+            transform: translateX(4px);
+        }
+    </style>
+</head>
+<body class="academics-app">
+
+    <!-- Top Navigation Bar with Direct Clickable Breadcrumbs -->
+    <nav class="acad-nav">
+        <div class="acad-nav-left">
+            <a href="/dashboard" class="acad-brand">Campus<span>Plus</span></a>
+            <div class="acad-breadcrumbs">
+                <a href="/dashboard">Dashboard</a>
+                <span class="separator">/</span>
+                <span class="current">Clubs</span>
+            </div>
+        </div>
+        <div class="acad-nav-right">
+            {% if user_email %}
+            <div class="acad-user-chip">
+                <div class="acad-user-avatar">{{ user_email[0].upper() }}</div>
+                <span>{{ user_email.split('@')[0] }}</span>
+            </div>
+            {% endif %}
+            <a href="/dashboard" class="acad-back-btn">← Dashboard</a>
+        </div>
+    </nav>
+
+    <div class="acad-container">
+
+        <!-- Hero Section -->
+        <div class="acad-hero" style="background: linear-gradient(135deg, #1e293b 0%, #334155 50%, #475569 100%); box-shadow: 0 10px 30px -5px rgba(30, 41, 59, 0.35);">
+            <div class="acad-hero-badge">🏛️ Student Communities</div>
+            <h1>MIT-WPU Clubs &amp; Societies</h1>
+            <p>Explore student-led technical organizations, cultural troupes, innovation labs, and sports clubs. Find your community and get involved on campus.</p>
+
+            <div class="acad-hero-stats">
+                <div class="acad-hero-stat-item">
+                    <span class="acad-hero-stat-num">{{ clubs|length }}</span>
+                    <span class="acad-hero-stat-label">Active Clubs</span>
+                </div>
+                <div class="acad-hero-stat-item">
+                    <span class="acad-hero-stat-num">
+                        {{ clubs|selectattr('category', 'equalto', 'technical')|list|length }}
+                    </span>
+                    <span class="acad-hero-stat-label">Technical</span>
+                </div>
+                <div class="acad-hero-stat-item">
+                    <span class="acad-hero-stat-num">
+                        {{ clubs|selectattr('category', 'equalto', 'cultural')|list|length }}
+                    </span>
+                    <span class="acad-hero-stat-label">Cultural</span>
+                </div>
+                <div class="acad-hero-stat-item">
+                    <span class="acad-hero-stat-num">
+                        {{ clubs|selectattr('category', 'equalto', 'innovation')|list|length }}
+                    </span>
+                    <span class="acad-hero-stat-label">Innovation</span>
+                </div>
+                <div class="acad-hero-stat-item">
+                    <span class="acad-hero-stat-num">
+                        {{ clubs|selectattr('category', 'equalto', 'social')|list|length }}
+                    </span>
+                    <span class="acad-hero-stat-label">Social &amp; Sports</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search Bar & Category Filter Pills -->
+        <div class="acad-search-bar-wrap">
+            <div class="acad-search-input-group">
+                <span class="acad-search-icon">🔍</span>
+                <input type="text" id="clubSearchInput" class="acad-search-input" 
+                       placeholder="Search clubs by name, category or description..." 
+                       oninput="filterClubs()">
+                <span class="acad-search-kbd">/</span>
+            </div>
+
+            <div class="acad-filter-pills" id="clubCategoryFilters">
+                <button class="acad-pill active" onclick="setCategory('all', this)">All Clubs ({{ clubs|length }})</button>
+                <button class="acad-pill" onclick="setCategory('technical', this)">⚙️ Technical</button>
+                <button class="acad-pill" onclick="setCategory('cultural', this)">🎭 Cultural</button>
+                <button class="acad-pill" onclick="setCategory('social', this)">🤝 Social</button>
+                <button class="acad-pill" onclick="setCategory('sports', this)">🏆 Sports</button>
+                <button class="acad-pill" onclick="setCategory('innovation', this)">💡 Innovation</button>
+                <button class="acad-pill" onclick="setCategory('other', this)">✨ Other</button>
+            </div>
+        </div>
+
+        <!-- Clubs Grid -->
+        <div class="clubs-grid" id="clubsGrid">
+            {% for club in clubs %}
+            <a href="/clubs/{{ club.id }}" class="club-card" 
+               data-name="{{ club.name|lower }}"
+               data-desc="{{ (club.description or '')|lower }}" 
+               data-cat="{{ club.category }}">
+
+                <div class="club-banner" style="background: {{ banner_colors[loop.index0 % banner_colors|length] }};">
+                    {% if club.banner_url %}
+                    <img src="{{ club.banner_url }}" alt="{{ club.name }} banner">
+                    {% endif %}
+                    <div class="club-logo-wrap">
+                        {% if club.logo_url %}
+                        <img src="{{ club.logo_url }}" alt="{{ club.name }} logo" style="width: 100%; height: 100%; object-fit: contain;">
+                        {% else %}
+                        🏛️
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="club-body">
+                    <span class="club-cat-badge badge-{{ club.category }}">
+                        {{ club.category.title() }}
+                    </span>
+                    <div class="club-name">{{ club.name }}</div>
+                    <div class="club-desc">{{ club.description or 'No description yet.' }}</div>
+                    <div class="club-footer">
+                        <span class="club-insta">
+                            {% if club.instagram_handle %}📸 {{ club.instagram_handle }}{% endif %}
+                        </span>
+                        <span class="club-arrow">View Club →</span>
+                    </div>
+                </div>
+            </a>
+            {% else %}
+            <div class="acad-empty-state" style="grid-column: 1 / -1;">
+                <div class="acad-empty-icon">🏛️</div>
+                <h3 class="acad-empty-title">No clubs found</h3>
+                <p class="acad-empty-sub">There are currently no active clubs listed.</p>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Empty search state -->
+        <div id="noClubsMatch" class="acad-empty-state" style="display: none; margin-top: 24px;">
+            <div class="acad-empty-icon">🔎</div>
+            <h3 class="acad-empty-title">No matching clubs found</h3>
+            <p class="acad-empty-sub">We couldn't find any club matching your search or category filter.</p>
+            <button class="acad-btn-primary" onclick="resetClubSearch()">Clear Search</button>
+        </div>
+
+    </div>
+
+    <script>
+    let activeCategory = 'all';
+
+    function setCategory(cat, btn) {
+        activeCategory = cat;
+        document.querySelectorAll('#clubCategoryFilters .acad-pill').forEach(p => p.classList.remove('active'));
+        if (btn) btn.classList.add('active');
+        filterClubs();
+    }
+
+    function filterClubs() {
+        const query = document.getElementById('clubSearchInput').value.trim().toLowerCase();
+        const cards = document.querySelectorAll('.club-card');
+        let visibleCount = 0;
+
+        cards.forEach(card => {
+            const matchCat  = (activeCategory === 'all') || (card.dataset.cat === activeCategory);
+            const matchText = !query || card.dataset.name.includes(query) || card.dataset.desc.includes(query);
+
+            if (matchCat && matchText) {
+                card.style.display = 'flex';
+                visibleCount++;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        const noMatch = document.getElementById('noClubsMatch');
+        if (noMatch) {
+            noMatch.style.display = (visibleCount === 0 && cards.length > 0) ? 'flex' : 'none';
+        }
+    }
+
+    function resetClubSearch() {
+        document.getElementById('clubSearchInput').value = '';
+        setCategory('all', document.querySelector('#clubCategoryFilters .acad-pill'));
+    }
+
+    // Keyboard shortcut '/' to search
+    window.addEventListener('keydown', (e) => {
+        if (e.key === '/' && document.activeElement !== document.getElementById('clubSearchInput')) {
+            e.preventDefault();
+            document.getElementById('clubSearchInput').focus();
+        }
+    });
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,203 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background: #f0f2f5;
+    min-height: 100vh;
+}
+
+/* ── Navbar ───────────────────────────────── */
+.navbar {
+    background: #fff;
+    border-bottom: 1px solid #e8eaed;
+    padding: 0 32px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06);
+}
+.navbar-brand { font-size: 1.3rem; font-weight: 700; color: #4f46e5; letter-spacing: -.3px; }
+.navbar-brand span { color: #28a745; }
+.navbar-right { display: flex; align-items: center; gap: 16px; }
+.back-btn {
+    font-size: .85rem;
+    color: #555;
+    text-decoration: none;
+    font-weight: 600;
+    padding: 6px 14px;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    transition: all .2s;
+}
+.back-btn:hover { background: #f0f2f5; }
+
+/* ── Page ─────────────────────────────────── */
+.page-body {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 32px 24px;
+}
+
+.page-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin-bottom: 4px;
+}
+.page-sub {
+    font-size: .88rem;
+    color: #888;
+    margin-bottom: 28px;
+}
+
+/* ── Cards ────────────────────────────────── */
+.card {
+    background: #fff;
+    border-radius: 14px;
+    border: 1.5px solid #eee;
+    padding: 24px;
+    margin-bottom: 20px;
+}
+
+.card-heading {
+    font-size: .75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #aaa;
+    margin-bottom: 16px;
+}
+
+/* ── Current roles ────────────────────────── */
+.role-list { display: flex; flex-wrap: wrap; gap: 10px; }
+
+.role-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: .85rem;
+    font-weight: 600;
+}
+.chip-student            { background: #eef2ff; color: #4f46e5; }
+.chip-club_head          { background: #ecfdf5; color: #10b981; }
+.chip-placement_coordinator { background: #eff6ff; color: #3b82f6; }
+.chip-admin              { background: #fff7ed; color: #f59e0b; }
+
+.chip-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+/* ── Request form ─────────────────────────── */
+.form-group { margin-bottom: 16px; }
+
+.form-label {
+    display: block;
+    font-size: .83rem;
+    font-weight: 600;
+    color: #444;
+    margin-bottom: 6px;
+}
+
+.form-select, .form-textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1.5px solid #ddd;
+    border-radius: 8px;
+    font-size: .9rem;
+    font-family: 'Segoe UI', sans-serif;
+    color: #333;
+    background: #fff;
+    transition: border-color .2s;
+    outline: none;
+}
+.form-select:focus, .form-textarea:focus { border-color: #8b5cf6; }
+.form-textarea { resize: vertical; min-height: 90px; }
+
+#club-group { display: none; }
+
+.submit-btn {
+    padding: 10px 28px;
+    background: #8b5cf6;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: .9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background .2s;
+}
+.submit-btn:hover { background: #7c3aed; }
+
+/* ── Request history ──────────────────────── */
+.request-item {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 0;
+    border-bottom: 1px solid #f5f5f5;
+}
+.request-item:last-child { border-bottom: none; padding-bottom: 0; }
+
+.req-left { flex: 1; }
+.req-role {
+    font-size: .9rem;
+    font-weight: 700;
+    color: #1a1a2e;
+    text-transform: capitalize;
+}
+.req-role span {
+    font-size: .78rem;
+    color: #aaa;
+    font-weight: 400;
+    margin-left: 6px;
+}
+.req-reason {
+    font-size: .8rem;
+    color: #777;
+    margin-top: 3px;
+}
+.req-date {
+    font-size: .75rem;
+    color: #bbb;
+    margin-top: 4px;
+}
+
+.status-badge {
+    font-size: .72rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 10px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.badge-pending  { background: #fff7ed; color: #f59e0b; }
+.badge-approved { background: #ecfdf5; color: #10b981; }
+.badge-denied   { background: #fef2f2; color: #ef4444; }
+
+.empty-state {
+    font-size: .85rem;
+    color: #bbb;
+    text-align: center;
+    padding: 12px 0;
+}
+
+.flash-wrap { margin-bottom: 20px; }
+
+.notice {
+    font-size: .8rem;
+    color: #f59e0b;
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-top: 12px;
+}

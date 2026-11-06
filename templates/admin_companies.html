@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Companies | Admin Panel</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/user_style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_companies.css') }}">
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="sidebar-brand">Campus<span>Plus</span><span class="sidebar-tag">ADMIN PANEL</span></div>
+        <a href="/admin/dashboard" class="sidebar-link">📊 Overview</a>
+        <a href="/admin/role-requests" class="sidebar-link">🎓 Role Requests</a>
+        <a href="/admin/content" class="sidebar-link">📁 Content Moderation</a>
+        <a href="/admin/clubs" class="sidebar-link">🏛️ Clubs</a>
+        <a href="/admin/courses" class="sidebar-link">📚 Courses & Subjects</a>
+        <a href="/admin/users" class="sidebar-link">👥 Users</a>
+        <a href="/admin/companies" class="sidebar-link active">🏢 Companies</a>
+        <a href="/admin/logs" class="sidebar-link">📜 Admin Logs</a>
+        <div class="sidebar-footer"><a href="/admin/logout" class="logout-link">🚪 Log out</a></div>
+    </div>
+
+    <div class="main">
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flash-wrap">
+              {% for category, message in messages %}
+                <div class="flash-msg {% if category == 'success' %}msg-success{% else %}msg-danger{% endif %}">{{ message }}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <div class="main-header">
+            <div>
+                <h1>🏢 Companies</h1>
+                <p>{{ companies|length }} companies registered for placements.</p>
+            </div>
+            <button class="btn-add" onclick="openAddModal()">+ Add Company</button>
+        </div>
+
+        <div class="company-grid">
+            {% for co in companies %}
+            <div class="company-card">
+                <div class="company-top">
+                    <div class="company-logo-wrap">
+                        {% if co.logo_url %}
+                        <img src="{{ co.logo_url }}" alt="{{ co.name }}">
+                        {% else %}
+                        <span class="company-logo-placeholder">🏢</span>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <div class="company-name">{{ co.name }}</div>
+                        {% if co.website %}
+                        <a href="{{ co.website }}" target="_blank" class="company-website">{{ co.website | replace('https://','') | replace('http://','') | truncate(30) }}</a>
+                        {% endif %}
+                        <div class="drives-count">{{ co.drive_count }} placement drive{{ 's' if co.drive_count != 1 }}</div>
+                    </div>
+                </div>
+                <div class="company-actions">
+                    <button class="btn-edit" onclick='openEditModal({{ co|tojson }})'>Edit</button>
+                    <form action="/admin/companies/{{ co.id }}/delete" method="POST"
+                          onsubmit="return confirm('Delete {{ co.name }}? This will also delete all linked placement drives.');"
+                          class="delete-form">
+                        <button type="submit" class="btn-delete delete-form-btn">Delete</button>
+                    </form>
+                </div>
+            </div>
+            {% else %}
+            <div class="empty-companies">
+                No companies added yet.
+            </div>
+            {% endfor %}
+        </div>
+
+    </div>
+
+    <!-- Add/Edit Modal -->
+    <div class="modal-overlay" id="companyModal">
+        <div class="modal-box">
+            <div class="modal-title" id="modalTitle">Add Company</div>
+            <form id="companyForm" method="POST" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label class="form-label">Company Name</label>
+                    <input type="text" name="name" id="f_name" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Website</label>
+                    <input type="url" name="website" id="f_website" class="form-input" placeholder="https://company.com">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Logo</label>
+                    <input type="file" name="logo" id="f_logo" class="form-input" accept="image/*"
+                           onchange="previewLogo(this)">
+                    <img id="logoPreview" class="logo-preview">
+                    <input type="hidden" name="existing_logo_url" id="f_existing_logo">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn-save">Save Company</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+    const modal    = document.getElementById('companyModal');
+    const form     = document.getElementById('companyForm');
+    const titleEl  = document.getElementById('modalTitle');
+    const preview  = document.getElementById('logoPreview');
+
+    function previewLogo(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = e => { preview.src = e.target.result; preview.style.display = 'block'; };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function openAddModal() {
+        titleEl.textContent = 'Add Company';
+        form.action = '/admin/companies/add';
+        form.reset();
+        preview.style.display = 'none';
+        document.getElementById('f_existing_logo').value = '';
+        modal.classList.add('active');
+    }
+
+    function openEditModal(co) {
+        titleEl.textContent = 'Edit ' + co.name;
+        form.action = '/admin/companies/' + co.id + '/edit';
+        document.getElementById('f_name').value    = co.name    || '';
+        document.getElementById('f_website').value = co.website || '';
+        document.getElementById('f_existing_logo').value = co.logo_url || '';
+        document.getElementById('f_logo').value = '';
+        if (co.logo_url) {
+            preview.src = co.logo_url;
+            preview.style.display = 'block';
+        } else {
+            preview.style.display = 'none';
+        }
+        modal.classList.add('active');
+    }
+
+    function closeModal() { modal.classList.remove('active'); }
+    modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+    </script>
+
+</body>
+</html>

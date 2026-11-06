@@ -1,0 +1,133 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', sans-serif; background: #f5f5fa; min-height: 100vh; display: flex; }
+
+.sidebar { width: 240px; background: #16162a; color: #fff; min-height: 100vh; padding: 24px 0; position: sticky; top: 0; flex-shrink: 0; }
+.sidebar-brand { font-size: 1.2rem; font-weight: 700; padding: 0 24px 24px; border-bottom: 1px solid #2a2a45; margin-bottom: 16px; }
+.sidebar-brand span { color: #8b5cf6; }
+.sidebar-tag { display: block; font-size: .68rem; color: #8b5cf6; font-weight: 700; letter-spacing: .08em; margin-top: 2px; }
+.sidebar-link { display: flex; align-items: center; gap: 12px; padding: 12px 24px; color: #b8b8d0; text-decoration: none; font-size: .88rem; font-weight: 500; border-left: 3px solid transparent; transition: all .15s; }
+.sidebar-link:hover { background: #1f1f3a; color: #fff; }
+.sidebar-link.active { background: #1f1f3a; color: #fff; border-left-color: #8b5cf6; }
+.sidebar-footer { margin-top: 24px; padding-top: 16px; border-top: 1px solid #2a2a45; }
+.logout-link { display: flex; align-items: center; gap: 12px; padding: 12px 24px; color: #ef4444; text-decoration: none; font-size: .88rem; font-weight: 600; }
+.logout-link:hover { background: #1f1f3a; }
+
+.main { flex: 1; padding: 32px 36px; }
+.main-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+.main-header h1 { font-size: 1.5rem; font-weight: 700; color: #1a1a2e; }
+.main-header p { color: #888; font-size: .88rem; margin-top: 4px; }
+.flash-wrap { margin-bottom: 20px; }
+
+.btn-add {
+    background: #8b5cf6; color: #fff; border: none; padding: 10px 20px;
+    border-radius: 8px; font-size: .85rem; font-weight: 700; cursor: pointer;
+}
+.btn-add:hover { background: #7c3aed; }
+.btn-add.secondary { background: #eef2ff; color: #4f46e5; }
+.btn-add.secondary:hover { background: #e0e7ff; }
+
+.header-actions { display: flex; gap: 10px; }
+
+/* Course accordion list */
+.course-item {
+    background: #fff;
+    border-radius: 14px;
+    border: 1.5px solid #eee;
+    margin-bottom: 12px;
+    overflow: hidden;
+}
+.course-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    cursor: pointer;
+}
+.course-header:hover { background: #fafafa; }
+.course-title { font-weight: 700; color: #1a1a2e; font-size: .95rem; }
+.course-sub { font-size: .76rem; color: #aaa; margin-top: 2px; }
+.course-toggle { font-size: .8rem; color: #999; transition: transform .2s; }
+.course-toggle.open { transform: rotate(180deg); }
+
+.course-header-actions { display: flex; align-items: center; gap: 6px; }
+.course-actions { display: flex; gap: 6px; }
+.icon-btn {
+    background: none; border: none; cursor: pointer; font-size: .85rem;
+    padding: 6px 10px; border-radius: 6px; color: #888;
+}
+.icon-btn:hover { background: #f0f0f5; }
+.icon-btn.danger:hover { background: #fef2f2; color: #ef4444; }
+
+.course-body {
+    display: none;
+    padding: 0 20px 20px;
+    border-top: 1px solid #f0f0f0;
+}
+.course-body.open { display: block; }
+
+.subject-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 14px 0;
+}
+.subject-tag {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #f5f5fa;
+    color: #555;
+    font-size: .78rem;
+    padding: 5px 10px 5px 12px;
+    border-radius: 16px;
+}
+.subject-tag button {
+    background: none; border: none; color: #ef4444; cursor: pointer;
+    font-size: .85rem; padding: 0; line-height: 1;
+}
+
+.add-subject-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+}
+.add-subject-row select, .add-subject-row input {
+    flex: 1;
+    padding: 8px 10px;
+    border: 1.5px solid #ddd;
+    border-radius: 8px;
+    font-size: .82rem;
+    font-family: 'Segoe UI', sans-serif;
+}
+.add-subject-row button {
+    background: #10b981; color: #fff; border: none; padding: 8px 16px;
+    border-radius: 8px; font-size: .8rem; font-weight: 700; cursor: pointer; white-space: nowrap;
+}
+
+.new-subject-toggle {
+    font-size: .76rem;
+    color: #8b5cf6;
+    background: none;
+    border: none;
+    cursor: pointer;
+    margin-top: 8px;
+    text-decoration: underline;
+}
+
+/* Modal */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 200; align-items: center; justify-content: center; }
+.modal-overlay.active { display: flex; }
+.modal-box { background: #fff; border-radius: 16px; padding: 28px; width: 100%; max-width: 420px; }
+.modal-title { font-size: 1.1rem; font-weight: 700; color: #1a1a2e; margin-bottom: 18px; }
+.form-group { margin-bottom: 14px; }
+.form-label { display: block; font-size: .8rem; font-weight: 600; color: #444; margin-bottom: 5px; }
+.form-input { width: 100%; padding: 9px 12px; border: 1.5px solid #ddd; border-radius: 8px; font-size: .87rem; outline: none; }
+.form-input:focus { border-color: #8b5cf6; }
+.modal-actions { display: flex; gap: 10px; margin-top: 18px; }
+.btn-cancel { flex: 1; padding: 10px; border-radius: 8px; border: 1.5px solid #ddd; background: #fff; color: #555; font-weight: 700; font-size: .85rem; cursor: pointer; }
+.btn-save { flex: 1; padding: 10px; border-radius: 8px; border: none; background: #8b5cf6; color: #fff; font-weight: 700; font-size: .85rem; cursor: pointer; }
+
+.delete-form { display: inline; }
+.empty-subject-notice { font-size: .8rem; color: #bbb; }
+.toggle-actions-wrapper { display: flex; align-items: center; gap: 6px; }
+.new-subj-form-hidden { display: none; }

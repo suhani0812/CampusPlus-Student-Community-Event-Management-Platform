@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if content_type == 'notes' %}Lecture Notes{% else %}PYQs{% endif %} | {{ course.name }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/academics.css') }}">
+</head>
+<body class="academics-app">
+
+    <!-- Top Navigation Bar -->
+    <nav class="acad-nav">
+        <div class="acad-nav-left">
+            <a href="/dashboard" class="acad-brand">Campus<span>Plus</span></a>
+            <div class="acad-breadcrumbs">
+                <a href="/dashboard">Dashboard</a>
+                <span class="separator">/</span>
+                <a href="/academics">Academics</a>
+                <span class="separator">/</span>
+                <a href="/academics/{{ course.slug }}">{{ course.name }}</a>
+                <span class="separator">/</span>
+                <span class="current">{% if content_type == 'notes' %}Notes{% else %}PYQs{% endif %}</span>
+            </div>
+        </div>
+        <div class="acad-nav-right">
+            {% if user_email %}
+            <div class="acad-user-chip">
+                <div class="acad-user-avatar">{{ user_email[0].upper() }}</div>
+                <span>{{ user_email.split('@')[0] }}</span>
+            </div>
+            {% endif %}
+            <a href="/academics/{{ course.slug }}" class="acad-back-btn">← Course Hub</a>
+        </div>
+    </nav>
+
+    <div class="acad-container">
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flash-wrap">
+              {% for category, message in messages %}
+                <div class="flash-msg {% if category == 'success' %}msg-success{% else %}msg-danger{% endif %}">
+                  <span>{{ message }}</span>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <!-- Quick Switcher Tabs -->
+        <div class="acad-subnav-tabs">
+            <a href="/academics/{{ course.slug }}/notes" 
+               class="acad-tab-btn {% if content_type == 'notes' %}active tab-notes{% endif %}">
+                📚 Notes
+            </a>
+            <a href="/academics/{{ course.slug }}/pyqs" 
+               class="acad-tab-btn {% if content_type == 'pyqs' %}active tab-pyqs{% endif %}">
+                📝 Previous Year Questions
+            </a>
+            <a href="/academics/{{ course.slug }}/projects" 
+               class="acad-tab-btn">
+                🚀 Projects
+            </a>
+        </div>
+
+        <!-- Section Header -->
+        <div style="margin-bottom: 24px;">
+            <h1 style="font-family: var(--font-heading); font-size: 1.85rem; font-weight: 800; color: var(--text-main); margin-bottom: 6px;">
+                {% if content_type == 'notes' %}
+                    📚 {{ course.name }} — Notes &amp; Study Guides
+                {% else %}
+                    📝 {{ course.name }} — Previous Year Question Papers
+                {% endif %}
+            </h1>
+            <p style="color: var(--text-muted); font-size: 0.92rem;">
+                Select a subject below to view uploaded {% if content_type == 'notes' %}lecture notes, slides, and cheat sheets{% else %}exam papers and solved solutions{% endif %}, or share your own files.
+            </p>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="acad-search-bar-wrap">
+            <div class="acad-search-input-group">
+                <span class="acad-search-icon">🔍</span>
+                <input type="text" id="subjectSearchInput" class="acad-search-input" 
+                       placeholder="Search subjects (e.g. Data Structures, Operating Systems, Math, Networks)..." 
+                       oninput="filterSubjects()">
+                <span class="acad-search-kbd">/</span>
+            </div>
+        </div>
+
+        <!-- Subjects Grid -->
+        <div class="acad-subjects-grid" id="subjectsGrid">
+            {% for subject in subjects %}
+            <a href="/academics/{{ course.slug }}/{{ content_type }}/{{ subject.id }}" 
+               class="acad-subject-card {% if content_type == 'pyqs' %}theme-pyqs{% endif %}"
+               data-name="{{ subject.name|lower }}">
+
+                <div class="acad-subject-header">
+                    <div class="acad-subject-icon">
+                        {% if content_type == 'notes' %}📖{% else %}📄{% endif %}
+                    </div>
+                    <span class="acad-subject-count-badge {% if content_type == 'pyqs' %}pyqs{% endif %}">
+                        {{ subject.file_count }} {% if content_type == 'notes' %}Notes{% else %}Papers{% endif %}
+                    </span>
+                </div>
+
+                <div class="acad-subject-name">{{ subject.name }}</div>
+
+                {% if subject.my_pending_count > 0 %}
+                <div style="margin-bottom: 12px;">
+                    <span class="acad-status-pending">⏳ {{ subject.my_pending_count }} file under review</span>
+                </div>
+                {% endif %}
+
+                <div class="acad-subject-card-footer">
+                    <span>View {% if content_type == 'notes' %}Notes{% else %}PYQs{% endif %}</span>
+                    <span>→</span>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+
+        <!-- Empty search state -->
+        <div id="noSubjectsState" class="acad-empty-state" style="display: none; margin-top: 24px;">
+            <div class="acad-empty-icon">🔎</div>
+            <h3 class="acad-empty-title">No subjects found</h3>
+            <p class="acad-empty-sub">We couldn't find any subjects matching your query. Check the spelling or clear the search.</p>
+            <button class="acad-btn-primary" onclick="resetSubjectSearch()">Clear Search</button>
+        </div>
+
+    </div>
+
+    <script>
+    function filterSubjects() {
+        const query = document.getElementById('subjectSearchInput').value.trim().toLowerCase();
+        const cards = document.querySelectorAll('.acad-subject-card');
+        let visibleCount = 0;
+
+        cards.forEach(card => {
+            const name = card.getAttribute('data-name');
+            if (!query || name.includes(query)) {
+                card.style.display = 'flex';
+                visibleCount++;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        const noState = document.getElementById('noSubjectsState');
+        noState.style.display = visibleCount === 0 ? 'flex' : 'none';
+    }
+
+    function resetSubjectSearch() {
+        document.getElementById('subjectSearchInput').value = '';
+        filterSubjects();
+    }
+
+    // Keyboard shortcut '/' to search
+    window.addEventListener('keydown', (e) => {
+        if (e.key === '/' && document.activeElement !== document.getElementById('subjectSearchInput')) {
+            e.preventDefault();
+            document.getElementById('subjectSearchInput').focus();
+        }
+    });
+    </script>
+
+</body>
+</html>

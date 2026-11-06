@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ event.title }} | CampusPlus Events</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/user_style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/academics.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/events.css') }}">
+</head>
+<body class="academics-app">
+
+    <!-- Top Navigation Bar with Direct Clickable Breadcrumbs -->
+    <nav class="acad-nav">
+        <div class="acad-nav-left">
+            <a href="/dashboard" class="acad-brand">Campus<span>Plus</span></a>
+            <div class="acad-breadcrumbs">
+                <a href="/dashboard">Dashboard</a>
+                <span class="separator">/</span>
+                <a href="/events">Events</a>
+                <span class="separator">/</span>
+                <span class="current">{{ event.title }}</span>
+            </div>
+        </div>
+        <div class="acad-nav-right">
+            {% if user_email %}
+            <div class="acad-user-chip">
+                <div class="acad-user-avatar">{{ user_email[0].upper() }}</div>
+                <span>{{ user_email.split('@')[0] }}</span>
+            </div>
+            {% endif %}
+            <a href="/events" class="acad-back-btn">← All Events</a>
+        </div>
+    </nav>
+
+    <div class="acad-container">
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flash-wrap">
+              {% for category, message in messages %}
+                <div class="flash-msg {% if category == 'success' %}msg-success{% else %}msg-danger{% endif %}">
+                  <span>{{ message }}</span>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <!-- Event Poster Hero Banner -->
+        <div class="event-detail-banner-card">
+            <div class="event-detail-poster-hero">
+                {% if event.poster_url %}
+                <img src="{{ event.poster_url }}" alt="{{ event.title }} Poster">
+                {% endif %}
+                <div class="hero-overlay"></div>
+            </div>
+
+            <div class="event-detail-content-wrap">
+                <div class="event-detail-badges-row">
+                    <span class="acad-dept-badge {% if event.type == 'academic' %}badge-tech{% else %}badge-sci{% endif %}">
+                        {{ event.type|title }} Event
+                    </span>
+                    <span class="acad-subject-count-pill">
+                        {{ event.location_type.replace('_',' ').title() }}
+                    </span>
+                    <a href="/clubs/{{ event.club_id }}" class="event-host-pill" style="position: static; background: #f1f5f9; color: var(--text-main);">
+                        <span>🏛️ Hosted by {{ event.club_name }}</span>
+                    </a>
+                </div>
+
+                <h1 class="event-detail-title">{{ event.title }}</h1>
+
+                <div style="display: flex; gap: 24px; flex-wrap: wrap; color: var(--text-muted); font-size: 0.92rem;">
+                    <div>
+                        <strong>🗓️ Date:</strong> 
+                        {% if event.event_date %}
+                            {{ event.event_date.strftime('%A, %B %d, %Y') }}
+                            {% if event.end_date %}
+                            to {{ event.end_date.strftime('%B %d, %Y') }}
+                            {% endif %}
+                        {% else %}
+                            TBA
+                        {% endif %}
+                    </div>
+                    <div>
+                        <strong>⏰ Time:</strong> 
+                        {% if event.event_date %}
+                            {{ event.event_date.strftime('%I:%M %p') }}
+                        {% else %}
+                            TBA
+                        {% endif %}
+                    </div>
+                    <div>
+                        <strong>📍 Location:</strong> {{ event.venue or 'Venue details to follow' }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Layout: 2 Columns (Details & Registration Sidebar) -->
+        <div class="event-detail-grid">
+
+            <!-- Left / Main Column -->
+            <div>
+                <!-- About Event -->
+                <div class="acad-recent-section" style="margin-bottom: 24px;">
+                    <h3 style="font-family: var(--font-heading); font-size: 1.2rem; font-weight: 700; margin-bottom: 14px;">
+                        📖 About the Event
+                    </h3>
+                    <p style="color: var(--text-muted); line-height: 1.7; font-size: 0.95rem; white-space: pre-line;">
+                        {{ event.description or 'No full description available for this event.' }}
+                    </p>
+                </div>
+
+                <!-- Host Club Card -->
+                <div class="acad-recent-section" style="margin-bottom: 24px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+                        <h3 style="font-family: var(--font-heading); font-size: 1.15rem; font-weight: 700;">
+                            🏛️ Organized by {{ event.club_name }}
+                        </h3>
+                        <a href="/clubs/{{ event.club_id }}" class="acad-course-card-arrow">View Club Profile →</a>
+                    </div>
+                    <p style="color: var(--text-muted); font-size: 0.88rem; line-height: 1.6; margin-bottom: 14px;">
+                        {{ event.club_description or 'Official student organization at MIT-WPU.' }}
+                    </p>
+                    {% if event.instagram_handle %}
+                    <a href="https://instagram.com/{{ event.instagram_handle | replace('@','') }}" target="_blank" rel="noopener" 
+                       style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; color: #e1306c; font-weight: 600; text-decoration: none;">
+                        <span>📸 Follow {{ event.instagram_handle }}</span>
+                    </a>
+                    {% endif %}
+                </div>
+
+                <!-- More Events by this Club -->
+                {% if more_events %}
+                <div class="acad-recent-section">
+                    <h3 style="font-family: var(--font-heading); font-size: 1.15rem; font-weight: 700; margin-bottom: 14px;">
+                        ⚡ Other Events by {{ event.club_name }}
+                    </h3>
+                    <div class="acad-activity-list">
+                        {% for other in more_events %}
+                        <a href="/events/{{ other.id }}" class="acad-activity-item">
+                            <div class="acad-activity-left">
+                                <span class="acad-activity-type-badge badge-tech">{{ other.type.upper() }}</span>
+                                <div>
+                                    <div class="acad-activity-title">{{ other.title }}</div>
+                                    <div class="acad-activity-meta">
+                                        {{ other.event_date.strftime('%b %d, %Y') if other.event_date else 'Date TBA' }} · {{ other.venue or 'Campus' }}
+                                    </div>
+                                </div>
+                            </div>
+                            <span class="acad-course-card-arrow">View →</span>
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Right Sidebar -->
+            <div>
+                <div class="event-sidebar-card">
+                    <h3 style="font-family: var(--font-heading); font-size: 1.2rem; font-weight: 800; margin-bottom: 6px;">
+                        🎟️ Event Registration
+                    </h3>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px;">
+                        Reserve your seat or team slot for this event. Limited seats available on a first-come basis.
+                    </p>
+
+                    {% if event.registration_link %}
+                    <a href="{{ event.registration_link }}" target="_blank" rel="noopener" class="acad-btn-primary" 
+                       style="width: 100%; justify-content: center; padding: 12px; font-size: 0.95rem; margin-bottom: 14px;">
+                        <span>Register Now</span>
+                        <span>↗</span>
+                    </a>
+                    <p style="font-size: 0.74rem; color: var(--text-light); text-align: center;">
+                        Official registration handled via external campus portal.
+                    </p>
+                    {% else %}
+                    <div style="padding: 12px; background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-sm); font-size: 0.82rem; color: var(--text-muted); text-align: center;">
+                        No external registration link required. Open for walk-in campus entry!
+                    </div>
+                    {% endif %}
+
+                    <hr style="border: none; border-top: 1px solid #f1f5f9; margin: 20px 0;">
+
+                    <div style="display: flex; flex-direction: column; gap: 12px; font-size: 0.84rem; color: var(--text-muted);">
+                        <div>
+                            <strong>📍 Venue Type:</strong> {{ event.location_type.replace('_',' ').title() }}
+                        </div>
+                        <div>
+                            <strong>🏛️ Specific Hall / Ground:</strong> {{ event.venue or 'Campus Venue' }}
+                        </div>
+                        <div>
+                            <strong>🏷️ Category:</strong> {{ event.type.title() }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</body>
+</html>

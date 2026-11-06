@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Content Moderation | Admin Panel</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/user_style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_content.css') }}">
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="sidebar-brand">Campus<span>Plus</span><span class="sidebar-tag">ADMIN PANEL</span></div>
+        <a href="/admin/dashboard" class="sidebar-link">📊 Overview</a>
+        <a href="/admin/role-requests" class="sidebar-link">🎓 Role Requests</a>
+        <a href="/admin/content" class="sidebar-link active">
+            📁 Content Moderation
+            {% if total_pending %}<span class="badge">{{ total_pending }}</span>{% endif %}
+        </a>
+        <a href="/admin/clubs" class="sidebar-link">🏛️ Clubs</a>
+        <a href="/admin/courses" class="sidebar-link">📚 Courses & Subjects</a>
+        <a href="/admin/users" class="sidebar-link">👥 Users</a>
+        <a href="/admin/companies" class="sidebar-link">🏢 Companies</a>
+        <a href="/admin/logs" class="sidebar-link">📜 Admin Logs</a>
+        <div class="sidebar-footer"><a href="/admin/logout" class="logout-link">🚪 Log out</a></div>
+    </div>
+
+    <div class="main">
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flash-wrap">
+              {% for category, message in messages %}
+                <div class="flash-msg {% if category == 'success' %}msg-success{% else %}msg-danger{% endif %}">{{ message }}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <div class="main-header">
+            <h1>📁 Content Moderation</h1>
+            <p>Review pending uploads across all sections.</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="showTab('academic', this)">
+                Academic <span class="tab-count">{{ academic_content|length }}</span>
+            </button>
+            <button class="tab-btn" onclick="showTab('events', this)">
+                Events <span class="tab-count">{{ events|length }}</span>
+            </button>
+            <button class="tab-btn" onclick="showTab('accommodations', this)">
+                Accommodations <span class="tab-count">{{ accommodations|length }}</span>
+            </button>
+            <button class="tab-btn" onclick="showTab('placements', this)">
+                Placements <span class="tab-count">{{ placements|length }}</span>
+            </button>
+        </div>
+
+        <!-- Academic Content -->
+        <div class="tab-content active" id="tab-academic">
+            {% if academic_content %}
+                {% for item in academic_content %}
+                <div class="content-card">
+                    <div class="c-info">
+                        <span class="c-type-badge badge-{{ item.type }}">{{ item.type.upper() }}</span>
+                        <div class="c-title">{{ item.title }}</div>
+                        <div class="c-meta">
+                            {% if item.subject_name %}<strong>{{ item.subject_name }}</strong> ·{% endif %}
+                            {% if item.course_name %}<strong>{{ item.course_name }}</strong> ·{% endif %}
+                            Uploaded by {{ item.uploaded_by_email }}
+                            <br>{{ item.created_at.strftime('%d %b %Y, %I:%M %p') }}
+                            {% if item.tags %}<br>🏷️ {{ item.tags }}{% endif %}
+                        </div>
+                        <a href="{{ item.file_url }}" target="_blank" class="c-link">📄 View File →</a>
+                    </div>
+                    <div class="c-actions">
+                        <form action="/admin/content/note/{{ item.id }}/approve" method="POST">
+                            <button type="submit" class="btn-approve">✓ Approve</button>
+                        </form>
+                        <form action="/admin/content/note/{{ item.id }}/deny" method="POST">
+                            <button type="submit" class="btn-deny">✕ Deny</button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">No pending academic content.</div>
+            {% endif %}
+        </div>
+
+        <!-- Events -->
+        <div class="tab-content" id="tab-events">
+            {% if events %}
+                {% for item in events %}
+                <div class="content-card">
+                    <div class="c-info">
+                        <span class="c-type-badge badge-event">{{ item.type.upper() }}</span>
+                        <div class="c-title">{{ item.title }}</div>
+                        <div class="c-meta">
+                            <strong>{{ item.club_name }}</strong> ·
+                            {{ item.location_type.replace('_', ' ').title() }}
+                            {% if item.venue %} · {{ item.venue }}{% endif %}
+                            <br>{{ item.event_date.strftime('%d %b %Y') if item.event_date else 'Date TBA' }}
+                            <br>Added by {{ item.created_by_email }}
+                        </div>
+                        {% if item.poster_url %}
+                        <a href="{{ item.poster_url }}" target="_blank" class="c-link">🖼️ View Poster →</a>
+                        {% endif %}
+                    </div>
+                    <div class="c-actions">
+                        <form action="/admin/content/event/{{ item.id }}/approve" method="POST">
+                            <button type="submit" class="btn-approve">✓ Approve</button>
+                        </form>
+                        <form action="/admin/content/event/{{ item.id }}/deny" method="POST">
+                            <button type="submit" class="btn-deny">✕ Deny</button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">No pending events.</div>
+            {% endif %}
+        </div>
+
+        <!-- Accommodations -->
+        <div class="tab-content" id="tab-accommodations">
+            {% if accommodations %}
+                {% for item in accommodations %}
+                <div class="content-card">
+                    <div class="c-info">
+                        <span class="c-type-badge badge-accommodation">{{ item.type.upper() }}</span>
+                        <div class="c-title">{{ item.title }}</div>
+                        <div class="c-meta">
+                            {{ item.address }}
+                            {% if item.rent %} · ₹{{ item.rent }}/mo{% endif %}
+                            <br>Listed by {{ item.listed_by_email }}
+                            <br>{{ item.created_at.strftime('%d %b %Y') }}
+                        </div>
+                        {% if item.location_url %}
+                        <a href="{{ item.location_url }}" target="_blank" class="c-link">📍 View Location →</a>
+                        {% endif %}
+                    </div>
+                    <div class="c-actions">
+                        <form action="/admin/content/accommodation/{{ item.id }}/approve" method="POST">
+                            <button type="submit" class="btn-approve">✓ Approve</button>
+                        </form>
+                        <form action="/admin/content/accommodation/{{ item.id }}/deny" method="POST">
+                            <button type="submit" class="btn-deny">✕ Deny</button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">No pending accommodation listings.</div>
+            {% endif %}
+        </div>
+
+        <!-- Placements -->
+        <div class="tab-content" id="tab-placements">
+            {% if placements %}
+                {% for item in placements %}
+                <div class="content-card">
+                    <div class="c-info">
+                        <span class="c-type-badge badge-placement">{{ item.company_name }}</span>
+                        <div class="c-title">{{ item.role_title }}</div>
+                        <div class="c-meta">
+                            {% if item.package_lpa %}₹{{ item.package_lpa }} LPA ·{% endif %}
+                            {{ item.drive_date.strftime('%d %b %Y') if item.drive_date else 'Date TBA' }}
+                            <br>Added by {{ item.added_by_email }}
+                        </div>
+                        {% if item.jd_file_url %}
+                        <a href="{{ item.jd_file_url }}" target="_blank" class="c-link">📄 View JD →</a>
+                        {% endif %}
+                    </div>
+                    <div class="c-actions">
+                        <form action="/admin/content/placement/{{ item.id }}/approve" method="POST">
+                            <button type="submit" class="btn-approve">✓ Approve</button>
+                        </form>
+                        <form action="/admin/content/placement/{{ item.id }}/deny" method="POST">
+                            <button type="submit" class="btn-deny">✕ Deny</button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">No pending placement drives.</div>
+            {% endif %}
+        </div>
+
+    </div>
+
+    <script>
+    function showTab(tab, btn) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        document.getElementById('tab-' + tab).classList.add('active');
+        btn.classList.add('active');
+    }
+    </script>
+
+</body>
+</html>

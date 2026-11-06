@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Role | CampusPlus</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/user_style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/role_request.css') }}">
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="navbar-brand">Campus<span>Plus</span></div>
+        <div class="navbar-right">
+            <a href="/dashboard" class="back-btn">← Dashboard</a>
+        </div>
+    </nav>
+
+    <div class="page-body">
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flash-wrap">
+              {% for category, message in messages %}
+                <div class="flash-msg {% if category == 'success' %}msg-success{% else %}msg-danger{% endif %}">
+                  {{ message }}
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <div class="page-title">🎓 My Role</div>
+        <div class="page-sub">View your current roles and request an upgrade.</div>
+
+        <!-- Current roles -->
+        <div class="card">
+            <div class="card-heading">Active Roles</div>
+            <div class="role-list">
+                {% for role in active_roles %}
+                <div class="role-chip chip-{{ role.role }}">
+                    <div class="chip-dot"></div>
+                    {{ role.role.replace('_', ' ').title() }}
+                    {% if role.club_name %} — {{ role.club_name }}{% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Request upgrade -->
+        <div class="card">
+            <div class="card-heading">Request a Role Upgrade</div>
+
+            {% if has_pending %}
+                <div class="notice">
+                    ⏳ You already have a pending request. Wait for admin review before submitting another.
+                </div>
+            {% else %}
+                <form action="/role-request" method="POST">
+
+                    <div class="form-group">
+                        <label class="form-label">Role you want</label>
+                        <select name="requested_role" id="roleSelect" class="form-select" required>
+                            <option value="" disabled selected>Select a role</option>
+                            {% if 'club_head' not in active_role_names %}
+                            <option value="club_head">Club Head</option>
+                            {% endif %}
+                            {% if 'placement_coordinator' not in active_role_names %}
+                            <option value="placement_coordinator">Placement Coordinator</option>
+                            {% endif %}
+                        </select>
+                    </div>
+
+                    <div class="form-group" id="club-group">
+                        <label class="form-label">Which club are you head of?</label>
+                        <select name="club_id" id="clubSelect" class="form-select">
+                            <option value="" disabled selected>Select a club</option>
+                            {% for club in clubs %}
+                            <option value="{{ club.id }}">{{ club.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Reason <span style="color:#bbb;font-weight:400;">(optional)</span></label>
+                        <textarea name="reason" class="form-textarea"
+                            placeholder="e.g. I am the elected CSE Club Head for 2026–27"></textarea>
+                    </div>
+
+                    <button type="submit" class="submit-btn">Submit Request</button>
+                </form>
+            {% endif %}
+        </div>
+
+        <!-- Request history -->
+        <div class="card">
+            <div class="card-heading">Request History</div>
+            {% if requests %}
+                {% for req in requests %}
+                <div class="request-item">
+                    <div class="req-left">
+                        <div class="req-role">
+                            {{ req.requested_role.replace('_', ' ').title() }}
+                            {% if req.club_name %}<span>— {{ req.club_name }}</span>{% endif %}
+                        </div>
+                        {% if req.reason %}
+                        <div class="req-reason">{{ req.reason }}</div>
+                        {% endif %}
+                        <div class="req-date">
+                            Requested {{ req.requested_at.strftime('%d %b %Y') }}
+                            {% if req.reviewed_at %}
+                                · Reviewed {{ req.reviewed_at.strftime('%d %b %Y') }}
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="status-badge badge-{{ req.status }}">
+                        {% if req.status == 'pending' %}⏳ Pending
+                        {% elif req.status == 'approved' %}✅ Approved
+                        {% else %}❌ Denied{% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">No requests yet.</div>
+            {% endif %}
+        </div>
+
+    </div>
+
+    <script>
+    // Show club dropdown only when club_head is selected
+    const roleSelect = document.getElementById("roleSelect");
+    const clubGroup  = document.getElementById("club-group");
+    const clubSelect = document.getElementById("clubSelect");
+
+    roleSelect.addEventListener("change", () => {
+        const isClubHead = roleSelect.value === "club_head";
+        clubGroup.style.display = isClubHead ? "block" : "none";
+        clubSelect.required = isClubHead;
+    });
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ acc.title }} | CampusPlus Accommodations</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/user_style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/academics.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/accommodations.css') }}">
+</head>
+<body class="academics-app">
+
+    <!-- Top Navigation Bar with Direct Clickable Breadcrumbs -->
+    <nav class="acad-nav">
+        <div class="acad-nav-left">
+            <a href="/dashboard" class="acad-brand">Campus<span>Plus</span></a>
+            <div class="acad-breadcrumbs">
+                <a href="/dashboard">Dashboard</a>
+                <span class="separator">/</span>
+                <a href="/accommodations">Accommodations</a>
+                <span class="separator">/</span>
+                <span class="current">{{ acc.title }}</span>
+            </div>
+        </div>
+        <div class="acad-nav-right">
+            {% if user_email %}
+            <div class="acad-user-chip">
+                <div class="acad-user-avatar">{{ user_email[0].upper() }}</div>
+                <span>{{ user_email.split('@')[0] }}</span>
+            </div>
+            {% endif %}
+            <a href="/accommodations" class="acad-back-btn">← All Stays</a>
+        </div>
+    </nav>
+
+    <div class="acad-container">
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flash-wrap">
+              {% for category, message in messages %}
+                <div class="flash-msg {% if category == 'success' %}msg-success{% else %}msg-danger{% endif %}">
+                  <span>{{ message }}</span>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <!-- Property Header Card -->
+        <div class="accomm-detail-header-card">
+            <div class="accomm-detail-top-row">
+                <div style="flex: 1;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                        <span class="accomm-type-pill {{ acc.type }}" style="position: static;">
+                            {{ acc.type|title }}
+                        </span>
+                        {% if acc.review_count > 0 %}
+                        <div class="accomm-rating-chip" style="position: static;">
+                            <span class="star-icon">★</span>
+                            <span>{{ acc.avg_rating }}</span>
+                            <span style="color: var(--text-light); font-size: 0.72rem;">({{ acc.review_count }} reviews)</span>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <h1 class="accomm-detail-title">{{ acc.title }}</h1>
+                    <p style="color: var(--text-muted); font-size: 0.95rem; margin-top: 4px;">
+                        📍 {{ acc.address }}
+                    </p>
+                </div>
+
+                <div class="accomm-detail-rent-display">
+                    <div class="accomm-rent-big">₹{{ "{:,.0f}".format(acc.rent) }}</div>
+                    <div class="accomm-rent-period">per month / bed</div>
+                </div>
+            </div>
+
+            {% if acc.location_url %}
+            <a href="{{ acc.location_url }}" target="_blank" rel="noopener" class="acad-btn-primary" 
+               style="display: inline-flex; font-size: 0.82rem; padding: 6px 14px; background: #f1f5f9; color: var(--text-main); border: 1px solid var(--border-color); box-shadow: none;">
+                <span>🗺️ Open in Google Maps ↗</span>
+            </a>
+            {% endif %}
+        </div>
+
+        <!-- Image Gallery Grid -->
+        {% if images %}
+        <div class="accomm-gallery-grid">
+            <div class="accomm-gallery-item-main" onclick="openAccommLightbox('{{ images[0].image_url }}')">
+                <img src="{{ images[0].image_url }}" alt="{{ acc.title }}">
+            </div>
+            {% for img in images[1:5] %}
+            <div class="accomm-gallery-item" onclick="openAccommLightbox('{{ img.image_url }}')">
+                <img src="{{ img.image_url }}" alt="{{ acc.title }}">
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Two Columns Layout (Info & Reviews + Contact Sidebar) -->
+        <div class="event-detail-grid">
+
+            <!-- Left / Main Column -->
+            <div>
+                <!-- Property Overview & Highlights -->
+                <div class="acad-recent-section" style="margin-bottom: 24px;">
+                    <h3 style="font-family: var(--font-heading); font-size: 1.2rem; font-weight: 700; margin-bottom: 14px;">
+                        🏡 Property Highlights
+                    </h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px;">
+                        <div style="background: #f8fafc; border: 1px solid #f1f5f9; padding: 12px 14px; border-radius: var(--radius-sm);">
+                            <div style="font-size: 0.75rem; color: var(--text-light); font-weight: 600; text-transform: uppercase;">Accommodation</div>
+                            <div style="font-weight: 700; color: var(--text-main); margin-top: 2px;">{{ acc.type|title }}</div>
+                        </div>
+                        <div style="background: #f8fafc; border: 1px solid #f1f5f9; padding: 12px 14px; border-radius: var(--radius-sm);">
+                            <div style="font-size: 0.75rem; color: var(--text-light); font-weight: 600; text-transform: uppercase;">Rent Schedule</div>
+                            <div style="font-weight: 700; color: var(--text-main); margin-top: 2px;">Monthly Advance</div>
+                        </div>
+                        <div style="background: #f8fafc; border: 1px solid #f1f5f9; padding: 12px 14px; border-radius: var(--radius-sm);">
+                            <div style="font-size: 0.75rem; color: var(--text-light); font-weight: 600; text-transform: uppercase;">Proximity</div>
+                            <div style="font-weight: 700; color: var(--text-main); margin-top: 2px;">Walking Distance to MIT-WPU</div>
+                        </div>
+                        <div style="background: #f8fafc; border: 1px solid #f1f5f9; padding: 12px 14px; border-radius: var(--radius-sm);">
+                            <div style="font-size: 0.75rem; color: var(--text-light); font-weight: 600; text-transform: uppercase;">Listed By</div>
+                            <div style="font-weight: 700; color: var(--text-main); margin-top: 2px;">{{ acc.lister_name or 'Verified Student' }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Student Reviews & Ratings -->
+                <div class="acad-recent-section" style="margin-bottom: 24px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+                        <h3 style="font-family: var(--font-heading); font-size: 1.2rem; font-weight: 700;">
+                            ⭐ Student Reviews ({{ reviews|length }})
+                        </h3>
+                        {% if acc.review_count > 0 %}
+                        <div style="font-size: 0.9rem; font-weight: 700; color: var(--text-main);">
+                            <span style="color: #f59e0b;">★</span> {{ acc.avg_rating }} / 5.0
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Reviews List -->
+                    {% if reviews %}
+                    <div style="display: flex; flex-direction: column;">
+                        {% for r in reviews %}
+                        <div class="review-item">
+                            <div class="review-header">
+                                <span class="reviewer-name">{{ r.full_name or r.email.split('@')[0] }}</span>
+                                <div class="review-stars">
+                                    {% for i in range(r.rating) %}★{% endfor %}{% for i in range(5 - r.rating) %}☆{% endfor %}
+                                </div>
+                            </div>
+                            <div class="review-date">
+                                {{ r.created_at.strftime('%b %d, %Y') if r.created_at else 'Recently' }}
+                            </div>
+                            <p class="review-comment">{{ r.comment }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p style="color: var(--text-muted); font-size: 0.9rem; padding: 12px 0;">
+                        No student reviews yet. Have you stayed here? Share your feedback below!
+                    </p>
+                    {% endif %}
+                </div>
+
+                <!-- Add Review Form -->
+                <div class="acad-recent-section">
+                    <h3 style="font-family: var(--font-heading); font-size: 1.15rem; font-weight: 700; margin-bottom: 8px;">
+                        ✍️ Write a Review
+                    </h3>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">
+                        Help fellow students by rating food, cleanliness, WiFi, and safety.
+                    </p>
+
+                    <form action="/accommodations/{{ acc.id }}/reviews" method="POST">
+                        <div class="acad-form-group">
+                            <label for="ratingSelect">Your Rating (1 to 5 Stars) *</label>
+                            <select id="ratingSelect" name="rating" class="acad-form-input" style="max-width: 200px;" required>
+                                <option value="5">★★★★★ (5 - Excellent)</option>
+                                <option value="4">★★★★☆ (4 - Good)</option>
+                                <option value="3">★★★☆☆ (3 - Average)</option>
+                                <option value="2">★★☆☆☆ (2 - Below Average)</option>
+                                <option value="1">★☆☆☆☆ (1 - Poor)</option>
+                            </select>
+                        </div>
+
+                        <div class="acad-form-group">
+                            <label for="reviewComment">Your Feedback *</label>
+                            <textarea id="reviewComment" name="comment" class="acad-form-textarea" 
+                                      placeholder="Share details about amenities, curfew rules, food quality, and owner responsiveness..." required></textarea>
+                        </div>
+
+                        <button type="submit" class="acad-btn-primary" style="background: #10b981;">
+                            Submit Review
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Right Sidebar: Contact & Booking -->
+            <div>
+                <div class="event-sidebar-card">
+                    <h3 style="font-family: var(--font-heading); font-size: 1.2rem; font-weight: 800; margin-bottom: 6px;">
+                        📞 Contact Owner / Manager
+                    </h3>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px;">
+                        Contact directly to schedule a room visit or check bed availability.
+                    </p>
+
+                    <div style="background: #f8fafc; border: 1.5px solid var(--border-color); border-radius: var(--radius-md); padding: 16px; margin-bottom: 18px;">
+                        <div style="font-size: 0.75rem; color: var(--text-light); font-weight: 600; text-transform: uppercase;">Contact Person</div>
+                        <div style="font-size: 1.05rem; font-weight: 800; color: var(--text-main); margin-top: 2px;">
+                            {{ acc.broker_name or 'Property In-Charge' }}
+                        </div>
+
+                        {% if acc.broker_contact %}
+                        <div style="margin-top: 12px; font-size: 0.95rem; font-weight: 700; color: var(--primary);">
+                            {{ acc.broker_contact }}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    {% if acc.broker_contact %}
+                    <a href="https://wa.me/{{ acc.broker_contact|replace(' ','')|replace('+','')|replace('-','') }}?text=Hi%2C%20I%20am%20a%20student%20from%20MIT-WPU%20interested%20in%20{{ acc.title|urlencode }}" 
+                       target="_blank" rel="noopener" class="btn-whatsapp-chat" 
+                       style="width: 100%; justify-content: center; padding: 12px; font-size: 0.92rem; margin-bottom: 12px;">
+                        <span>💬 Chat on WhatsApp</span>
+                    </a>
+
+                    <a href="tel:{{ acc.broker_contact|replace(' ','') }}" class="acad-btn-primary" 
+                       style="width: 100%; justify-content: center; padding: 10px; font-size: 0.88rem; background: #fff; color: var(--text-main); border: 1.5px solid var(--border-color); box-shadow: none;">
+                        <span>📞 Call Contact</span>
+                    </a>
+                    {% endif %}
+
+                    <hr style="border: none; border-top: 1px solid #f1f5f9; margin: 20px 0;">
+
+                    <div style="display: flex; flex-direction: column; gap: 10px; font-size: 0.82rem; color: var(--text-muted);">
+                        <div>✅ Verified CampusPlus listing</div>
+                        <div>✅ Zero platform brokerage</div>
+                        <div>✅ Direct owner / warden agreement</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Lightbox Modal for Photos -->
+    <div class="lightbox" id="accommLightbox" onclick="closeAccommLightbox()">
+        <button class="lightbox-close" onclick="closeAccommLightbox()">✕</button>
+        <img id="accommLightboxImg" src="" alt="Enlarged Property Photo">
+    </div>
+
+    <script>
+    function openAccommLightbox(src) {
+        document.getElementById('accommLightboxImg').src = src;
+        document.getElementById('accommLightbox').classList.add('active');
+    }
+    function closeAccommLightbox() {
+        document.getElementById('accommLightbox').classList.remove('active');
+    }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAccommLightbox(); });
+    </script>
+
+</body>
+</html>

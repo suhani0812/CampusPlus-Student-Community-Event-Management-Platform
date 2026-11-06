@@ -1,0 +1,39 @@
+.auth-page { background: #f8f9fa; }
+.auth-card { border-top: 5px solid #28a745; max-width: 460px; margin: 48px auto; background: #fff; padding: 28px; border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,.06); text-align: center; }
+
+.signup-emoji { font-size: 3rem; margin-bottom: 8px; }
+
+.domain-badge {
+    display: inline-block;
+    font-size: .78rem;
+    background: #eef2ff;
+    color: #4f46e5;
+    padding: 4px 10px;
+    border-radius: 20px;
+    margin-bottom: 16px;
+    font-weight: 600;
+}
+
+.strength-bar {
+    height: 4px;
+    border-radius: 2px;
+    background: #e0e0e0;
+    margin-top: -10px;
+    margin-bottom: 14px;
+    overflow: hidden;
+}
+.strength-fill {
+    height: 100%;
+    width: 0;
+    border-radius: 2px;
+    transition: width .3s, background .3s;
+}
+.hint { font-size: .78rem; color: #888; margin-top: -10px; margin-bottom: 14px; text-align: left; }
+
+#emailHint { display: none; color: #e53e3e; }
+
+.pass-wrap { position: relative; }
+.pass-toggle { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 1.1rem; user-select: none; }
+.input-field.with-toggle { padding-right: 44px; box-sizing: border-box; width: 100%; }
+
+#signupSubmit { background: #28a745; }

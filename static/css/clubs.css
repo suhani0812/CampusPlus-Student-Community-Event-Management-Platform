@@ -1,0 +1,64 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; min-height: 100vh; }
+
+/* Navbar */
+.navbar { background: #fff; border-bottom: 1px solid #e8eaed; padding: 0 32px; height: 60px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+.navbar-brand { font-size: 1.3rem; font-weight: 700; color: #4f46e5; letter-spacing: -.3px; text-decoration: none; }
+.navbar-brand span { color: #28a745; }
+.navbar-right { display: flex; align-items: center; gap: 16px; }
+.back-btn { font-size: .85rem; color: #555; text-decoration: none; font-weight: 600; padding: 6px 14px; border-radius: 6px; border: 1px solid #ddd; transition: all .2s; }
+.back-btn:hover { background: #f0f2f5; }
+
+/* Page */
+.page-body { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+.page-header { margin-bottom: 24px; }
+.page-header h1 { font-size: 1.5rem; font-weight: 700; color: #1a1a2e; }
+.page-header p { color: #888; font-size: .88rem; margin-top: 4px; }
+
+/* Search + filter bar */
+.filter-bar { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; align-items: center; }
+.search-box { flex: 1; min-width: 200px; padding: 10px 14px; border: 1.5px solid #ddd; border-radius: 10px; font-size: .88rem; font-family: 'Segoe UI', sans-serif; outline: none; }
+.search-box:focus { border-color: #10b981; }
+
+.cat-filters { display: flex; gap: 8px; flex-wrap: wrap; }
+.cat-pill { padding: 7px 16px; border-radius: 20px; font-size: .78rem; font-weight: 700; border: 1.5px solid #ddd; background: #fff; color: #888; cursor: pointer; transition: all .15s; }
+.cat-pill:hover, .cat-pill.active { border-color: currentColor; }
+.cat-pill.all.active { background: #1a1a2e; color: #fff; border-color: #1a1a2e; }
+.cat-pill.technical.active { background: #eef2ff; color: #4f46e5; border-color: #4f46e5; }
+.cat-pill.cultural.active { background: #fdf2f8; color: #db2777; border-color: #db2777; }
+.cat-pill.social.active { background: #ecfdf5; color: #10b981; border-color: #10b981; }
+.cat-pill.sports.active { background: #fff7ed; color: #f59e0b; border-color: #f59e0b; }
+.cat-pill.innovation.active { background: #eff6ff; color: #3b82f6; border-color: #3b82f6; }
+.cat-pill.other.active { background: #f3f4f6; color: #6b7280; border-color: #6b7280; }
+
+/* Club grid */
+.clubs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+
+.club-card { background: #fff; border-radius: 16px; border: 1.5px solid #eee; overflow: hidden; text-decoration: none; color: inherit; transition: transform .18s, box-shadow .18s; display: flex; flex-direction: column; }
+.club-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,.09); }
+
+.club-banner { height: 100px; background: linear-gradient(135deg, #667eea, #764ba2); position: relative; overflow: hidden; }
+.club-banner img { width: 100%; height: 100%; object-fit: cover; }
+.club-banner-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; }
+
+.club-logo-wrap { position: absolute; bottom: -20px; left: 16px; width: 44px; height: 44px; border-radius: 10px; background: #fff; border: 2px solid #fff; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; box-shadow: 0 2px 8px rgba(0,0,0,.12); overflow: hidden; }
+.club-logo-wrap img { width: 100%; height: 100%; object-fit: contain; }
+
+.club-body { padding: 28px 16px 16px; flex: 1; display: flex; flex-direction: column; gap: 8px; }
+
+.club-cat-badge { display: inline-block; font-size: .68rem; font-weight: 700; padding: 2px 10px; border-radius: 10px; width: fit-content; }
+.badge-technical { background: #eef2ff; color: #4f46e5; }
+.badge-cultural { background: #fdf2f8; color: #db2777; }
+.badge-social { background: #ecfdf5; color: #10b981; }
+.badge-sports { background: #fff7ed; color: #f59e0b; }
+.badge-innovation { background: #eff6ff; color: #3b82f6; }
+.badge-other { background: #f3f4f6; color: #6b7280; }
+
+.club-name { font-weight: 700; color: #1a1a2e; font-size: .97rem; }
+.club-desc { font-size: .8rem; color: #888; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.club-footer { display: flex; align-items: center; justify-content: space-between; margin-top: auto; padding-top: 10px; border-top: 1px solid #f5f5f5; }
+.club-insta { font-size: .75rem; color: #e1306c; font-weight: 600; }
+.club-arrow { font-size: .8rem; color: #10b981; font-weight: 700; }
+
+.empty-state { text-align: center; padding: 60px 20px; color: #bbb; font-size: .95rem; background: #fff; border-radius: 16px; border: 1.5px dashed #ddd; }
+.empty-state-grid { grid-column: 1/-1; }

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | CampusPlus</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/user_style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_dashboard.css') }}">
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-brand">
+            Campus<span>Plus</span>
+            <span class="sidebar-tag">ADMIN PANEL</span>
+        </div>
+
+        <a href="/admin/dashboard" class="sidebar-link active">📊 Overview</a>
+        <a href="/admin/role-requests" class="sidebar-link">
+            🎓 Role Requests
+            {% if pending_role_requests %}<span class="badge">{{ pending_role_requests }}</span>{% endif %}
+        </a>
+        <a href="/admin/content" class="sidebar-link">
+            📁 Content Moderation
+            {% if pending_content %}<span class="badge">{{ pending_content }}</span>{% endif %}
+        </a>
+        <a href="/admin/clubs" class="sidebar-link">🏛️ Clubs</a>
+        <a href="/admin/courses" class="sidebar-link">📚 Courses & Subjects</a>
+        <a href="/admin/users" class="sidebar-link">👥 Users</a>
+        <a href="/admin/companies" class="sidebar-link">🏢 Companies</a>
+        <a href="/admin/logs" class="sidebar-link">📜 Admin Logs</a>
+
+        <div class="sidebar-footer">
+            <a href="/admin/logout" class="logout-link">🚪 Log out</a>
+        </div>
+    </div>
+
+    <!-- Main -->
+    <div class="main">
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flash-wrap">
+              {% for category, message in messages %}
+                <div class="flash-msg {% if category == 'success' %}msg-success{% else %}msg-danger{% endif %}">
+                  {{ message }}
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <div class="main-header">
+            <h1>Welcome, Admin 👋</h1>
+            <p>Here's what needs your attention today.</p>
+        </div>
+
+        <!-- Stats -->
+        <div class="stat-grid">
+            <div class="stat-card {% if pending_role_requests %}alert{% endif %}">
+                <div class="stat-icon">🎓</div>
+                <div class="stat-num">{{ pending_role_requests }}</div>
+                <div class="stat-label">Pending Role Requests</div>
+            </div>
+            <div class="stat-card {% if pending_content %}alert{% endif %}">
+                <div class="stat-icon">📁</div>
+                <div class="stat-num">{{ pending_content }}</div>
+                <div class="stat-label">Pending Content</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">👥</div>
+                <div class="stat-num">{{ total_users }}</div>
+                <div class="stat-label">Total Users</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🏛️</div>
+                <div class="stat-num">{{ total_clubs }}</div>
+                <div class="stat-label">Active Clubs</div>
+            </div>
+        </div>
+
+        <!-- Quick actions -->
+        <p class="section-label">Quick Actions</p>
+        <div class="action-grid">
+            <a href="/admin/role-requests" class="action-card">
+                <div class="icon">🎓</div>
+                <div class="title">Review Role Requests</div>
+                <div class="sub">Approve or deny upgrade requests</div>
+            </a>
+            <a href="/admin/content" class="action-card">
+                <div class="icon">📁</div>
+                <div class="title">Moderate Content</div>
+                <div class="sub">Notes, PYQs, projects, events & more</div>
+            </a>
+            <a href="/admin/clubs" class="action-card">
+                <div class="icon">🏛️</div>
+                <div class="title">Manage Clubs</div>
+                <div class="sub">Add or edit club details</div>
+            </a>
+            <a href="/admin/courses" class="action-card">
+                <div class="icon">📚</div>
+                <div class="title">Courses & Subjects</div>
+                <div class="sub">Add new courses or subjects</div>
+            </a>
+            <a href="/admin/logs" class="action-card">
+                <div class="icon">📜</div>
+                <div class="title">View Logs</div>
+                <div class="sub">Full audit trail of admin actions</div>
+            </a>
+        </div>
+
+    </div>
+
+</body>
+</html>

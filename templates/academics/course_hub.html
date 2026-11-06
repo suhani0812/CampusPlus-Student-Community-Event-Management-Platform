@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ course.name }} | Academics Hub</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/academics.css') }}">
+</head>
+<body class="academics-app">
+
+    <!-- Top Navigation Bar -->
+    <nav class="acad-nav">
+        <div class="acad-nav-left">
+            <a href="/dashboard" class="acad-brand">Campus<span>Plus</span></a>
+            <div class="acad-breadcrumbs">
+                <a href="/dashboard">Dashboard</a>
+                <span class="separator">/</span>
+                <a href="/academics">Academics</a>
+                <span class="separator">/</span>
+                <span class="current">{{ course.name }}</span>
+            </div>
+        </div>
+        <div class="acad-nav-right">
+            {% if user_email %}
+            <div class="acad-user-chip">
+                <div class="acad-user-avatar">{{ user_email[0].upper() }}</div>
+                <span>{{ user_email.split('@')[0] }}</span>
+            </div>
+            {% endif %}
+            <a href="/academics" class="acad-back-btn">← All Courses</a>
+        </div>
+    </nav>
+
+    <div class="acad-container">
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flash-wrap">
+              {% for category, message in messages %}
+                <div class="flash-msg {% if category == 'success' %}msg-success{% else %}msg-danger{% endif %}">
+                  <span>{{ message }}</span>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <!-- Course Banner -->
+        <div class="acad-course-banner">
+            <div class="acad-hero-badge">{{ dept.icon }} {{ dept.name }}</div>
+            <h1>{{ course.name }}</h1>
+            <p>Select a category below to explore verified lecture notes, previous year question papers, or browse peer-built projects for this curriculum.</p>
+
+            <div class="acad-course-badges-row">
+                <span class="acad-banner-badge">📚 {{ subject_count }} Linked Subjects</span>
+                <span class="acad-banner-badge">📄 {{ notes_count }} Study Notes</span>
+                <span class="acad-banner-badge">📝 {{ pyqs_count }} Exam Papers</span>
+                <span class="acad-banner-badge">🚀 {{ projects_count }} Student Projects</span>
+            </div>
+        </div>
+
+        <!-- 3 CARDS: Notes / PYQs / Projects -->
+        <div class="acad-three-cards-grid">
+
+            <!-- Card 1: Notes -->
+            <a href="/academics/{{ course.slug }}/notes" class="acad-hub-card card-theme-notes">
+                <div class="acad-hub-card-icon">📚</div>
+                <h2>Lecture Notes</h2>
+                <p>Curated subject-wise handwritten notes, lecture presentations, module formulas, and reference materials uploaded by students.</p>
+                <div class="acad-hub-card-footer">
+                    <span class="acad-hub-stat">{{ notes_count }} Notes available</span>
+                    <span class="acad-hub-action-btn">Browse Notes →</span>
+                </div>
+            </a>
+
+            <!-- Card 2: PYQs -->
+            <a href="/academics/{{ course.slug }}/pyqs" class="acad-hub-card card-theme-pyqs">
+                <div class="acad-hub-card-icon">📝</div>
+                <h2>Previous Year Papers (PYQs)</h2>
+                <p>Official mid-term and end-term university question papers, marking schemes, and solved answer keys categorized by subject.</p>
+                <div class="acad-hub-card-footer">
+                    <span class="acad-hub-stat">{{ pyqs_count }} Papers available</span>
+                    <span class="acad-hub-action-btn">Browse PYQs →</span>
+                </div>
+            </a>
+
+            <!-- Card 3: Projects -->
+            <a href="/academics/{{ course.slug }}/projects" class="acad-hub-card card-theme-projects">
+                <div class="acad-hub-card-icon">🚀</div>
+                <h2>Student Projects</h2>
+                <p>Explore mini-projects, major capstone projects, code repos, and research documentation created by peers in this course.</p>
+                <div class="acad-hub-card-footer">
+                    <span class="acad-hub-stat">{{ projects_count }} Projects uploaded</span>
+                    <span class="acad-hub-action-btn">Explore Projects →</span>
+                </div>
+            </a>
+
+        </div>
+
+        <!-- Recent Course Activity -->
+        <div class="acad-recent-section">
+            <div class="acad-section-title-row">
+                <h3>⚡ Recent Uploads in {{ course.name }}</h3>
+                <span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 500;">Approved submissions</span>
+            </div>
+
+            {% if recent_activity %}
+            <div class="acad-activity-list">
+                {% for item in recent_activity %}
+                <div class="acad-activity-item">
+                    <div class="acad-activity-left">
+                        <span class="acad-activity-type-badge 
+                            {% if item.type == 'notes' %}badge-tech{% elif item.type == 'pyq' %}badge-mgmt{% else %}badge-sci{% endif %}">
+                            {{ item.type.upper() }}
+                        </span>
+                        <div>
+                            <div class="acad-activity-title">{{ item.title }}</div>
+                            <div class="acad-activity-meta">
+                                {% if item.subject_name %}{{ item.subject_name }} · {% endif %}
+                                {{ item.created_at.strftime('%b %d, %Y') if item.created_at else 'Recently' }}
+                            </div>
+                        </div>
+                    </div>
+                    {% if item.type == 'project' %}
+                    <a href="/academics/{{ course.slug }}/projects" class="acad-course-card-arrow">View Project →</a>
+                    {% elif item.type == 'pyq' %}
+                    <a href="/academics/{{ course.slug }}/pyqs" class="acad-course-card-arrow">View PYQs →</a>
+                    {% else %}
+                    <a href="/academics/{{ course.slug }}/notes" class="acad-course-card-arrow">View Notes →</a>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div style="text-align: center; padding: 28px 16px; color: var(--text-muted); font-size: 0.9rem;">
+                No files uploaded yet in this course. Be the first to share notes, papers, or projects!
+            </div>
+            {% endif %}
+        </div>
+
+    </div>
+
+</body>
+</html>

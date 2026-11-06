@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Logs | Admin Panel</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/user_style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_logs.css') }}">
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="sidebar-brand">Campus<span>Plus</span><span class="sidebar-tag">ADMIN PANEL</span></div>
+        <a href="/admin/dashboard" class="sidebar-link">📊 Overview</a>
+        <a href="/admin/role-requests" class="sidebar-link">🎓 Role Requests</a>
+        <a href="/admin/content" class="sidebar-link">📁 Content Moderation</a>
+        <a href="/admin/clubs" class="sidebar-link">🏛️ Clubs</a>
+        <a href="/admin/courses" class="sidebar-link">📚 Courses & Subjects</a>
+        <a href="/admin/users" class="sidebar-link">👥 Users</a>
+        <a href="/admin/companies" class="sidebar-link">🏢 Companies</a>
+        <a href="/admin/logs" class="sidebar-link active">📜 Admin Logs</a>
+        <div class="sidebar-footer"><a href="/admin/logout" class="logout-link">🚪 Log out</a></div>
+    </div>
+
+    <div class="main">
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flash-wrap">
+              {% for category, message in messages %}
+                <div class="flash-msg {% if category == 'success' %}msg-success{% else %}msg-danger{% endif %}">{{ message }}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <div class="main-header">
+            <div>
+                <h1>📜 Admin Logs</h1>
+                <p>{{ total_logs }} total entries · showing page {{ page }} of {{ total_pages }}.</p>
+            </div>
+            <a href="/admin/logs/export?{{ current_query }}" class="btn-export">⬇ Export CSV</a>
+        </div>
+
+        <!-- Filters -->
+        <form class="filters" method="GET" action="/admin/logs">
+            <div class="filter-group">
+                <label class="filter-label" for="search">Search logs</label>
+                <input type="search" id="search" name="search" class="filter-input"
+                       value="{{ filters.search }}" placeholder="Action, details, IP...">
+            </div>
+            <div class="filter-group">
+                <label class="filter-label" for="action">Action</label>
+                <select id="action" name="action" class="filter-select">
+                    <option value="">All</option>
+                    {% for a in ['login','approve','deny','delete','add','edit','revoke','export'] %}
+                    <option value="{{ a }}" {% if filters.action == a %}selected{% endif %}>{{ a.title() }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label" for="target_type">Target Type</label>
+                <select id="target_type" name="target_type" class="filter-select">
+                    <option value="">All</option>
+                    {% for t in ['note','pyq','project','club','event','accommodation','placement','user','role_request','course','subject','company'] %}
+                    <option value="{{ t }}" {% if filters.target_type == t %}selected{% endif %}>{{ t.replace('_',' ').title() }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label" for="status">Status</label>
+                <select id="status" name="status" class="filter-select">
+                    <option value="">All</option>
+                    <option value="success" {% if filters.status == 'success' %}selected{% endif %}>Success</option>
+                    <option value="fail"    {% if filters.status == 'fail'    %}selected{% endif %}>Fail</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label" for="date_from">From</label>
+                <input type="date" id="date_from" name="date_from" class="filter-input" value="{{ filters.date_from }}">
+            </div>
+            <div class="filter-group">
+                <label class="filter-label" for="date_to">To</label>
+                <input type="date" id="date_to" name="date_to" class="filter-input" value="{{ filters.date_to }}">
+            </div>
+            <button type="submit" class="btn-filter">Filter</button>
+            <a href="/admin/logs" class="btn-reset">Reset</a>
+        </form>
+
+        <!-- Logs table -->
+        <div class="table-wrap">
+            {% if logs %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Action</th>
+                        <th>Target</th>
+                        <th>Target ID</th>
+                        <th>Details</th>
+                        <th>Status</th>
+                        <th>IP Address</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td class="log-timestamp">
+                            {{ log.created_at.strftime('%d %b %Y') }}<br>
+                            <span class="log-time">{{ log.created_at.strftime('%I:%M:%S %p') }}</span>
+                        </td>
+                        <td>
+                            <span class="action-badge action-{{ log.action }}">{{ log.action }}</span>
+                        </td>
+                        <td><span class="target-type">{{ log.target_type }}</span></td>
+                        <td class="log-target-id">{{ log.target_id or '—' }}</td>
+                        <td class="details-cell">
+                            {% if log.details %}
+                                {% for k, v in log.details.items() %}
+                                <span class="log-detail-key">{{ k }}:</span> {{ v }}<br>
+                                {% endfor %}
+                            {% else %}—{% endif %}
+                        </td>
+                        <td>
+                            <span class="status-dot dot-{{ log.status }}"></span>
+                            {{ log.status }}
+                        </td>
+                        <td class="ip-cell">{{ log.ip_address or '—' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state">No log entries found for the selected filters.</div>
+            {% endif %}
+        </div>
+
+        <!-- Pagination -->
+        {% if total_pages > 1 %}
+        <div class="pagination">
+            {% if page > 1 %}
+            <a href="/admin/logs?page={{ page - 1 }}&{{ current_query }}" class="page-btn">← Prev</a>
+            {% endif %}
+
+            {% for p in range(1, total_pages + 1) %}
+                {% if p == page %}
+                <span class="page-btn active">{{ p }}</span>
+                {% elif p == 1 or p == total_pages or (p >= page - 2 and p <= page + 2) %}
+                <a href="/admin/logs?page={{ p }}&{{ current_query }}" class="page-btn">{{ p }}</a>
+                {% elif p == page - 3 or p == page + 3 %}
+                <span class="pagination-ellipsis">…</span>
+                {% endif %}
+            {% endfor %}
+
+            {% if page < total_pages %}
+            <a href="/admin/logs?page={{ page + 1 }}&{{ current_query }}" class="page-btn">Next →</a>
+            {% endif %}
+        </div>
+        {% endif %}
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const filterForm = document.querySelector('.filters');
+            const searchInput = document.getElementById('search');
+            if (!filterForm || !searchInput) return;
+
+            let searchTimeout;
+            searchInput.addEventListener('input', function() {
+                window.clearTimeout(searchTimeout);
+                searchTimeout = window.setTimeout(function() {
+                    filterForm.requestSubmit();
+                }, 300);
+            });
+
+            filterForm.querySelectorAll('select, input[type="date"]').forEach(function(input) {
+                input.addEventListener('change', function() {
+                    filterForm.requestSubmit();
+                });
+            });
+        });
+    </script>
+</body>
+</html>

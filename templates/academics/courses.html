@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Academics Hub | CampusPlus</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/academics.css') }}">
+</head>
+<body class="academics-app">
+
+    <!-- Top Navigation Bar -->
+    <nav class="acad-nav">
+        <div class="acad-nav-left">
+            <a href="/dashboard" class="acad-brand">Campus<span>Plus</span></a>
+            <div class="acad-breadcrumbs">
+                <a href="/dashboard">Dashboard</a>
+                <span class="separator">/</span>
+                <span class="current">Academics</span>
+            </div>
+        </div>
+        <div class="acad-nav-right">
+            {% if user_email %}
+            <div class="acad-user-chip">
+                <div class="acad-user-avatar">{{ user_email[0].upper() }}</div>
+                <span>{{ user_email.split('@')[0] }}</span>
+            </div>
+            {% endif %}
+            <a href="/dashboard" class="acad-back-btn">← Dashboard</a>
+        </div>
+    </nav>
+
+    <div class="acad-container">
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flash-wrap">
+              {% for category, message in messages %}
+                <div class="flash-msg {% if category == 'success' %}msg-success{% else %}msg-danger{% endif %}">
+                  <span>{{ message }}</span>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <!-- Hero Section -->
+        <div class="acad-hero">
+            <div class="acad-hero-badge">📚 Academic Knowledge Base</div>
+            <h1>MIT-WPU Academics Hub</h1>
+            <p>Access peer-shared lecture notes, verified previous year question papers (PYQs), and student capstone projects across all undergraduate and postgraduate degrees.</p>
+
+            <div class="acad-hero-stats">
+                <div class="acad-hero-stat-item">
+                    <span class="acad-hero-stat-num">{{ total_courses }}</span>
+                    <span class="acad-hero-stat-label">Academic Degrees</span>
+                </div>
+                <div class="acad-hero-stat-item">
+                    <span class="acad-hero-stat-num">{{ total_notes }}</span>
+                    <span class="acad-hero-stat-label">Lecture Notes</span>
+                </div>
+                <div class="acad-hero-stat-item">
+                    <span class="acad-hero-stat-num">{{ total_pyqs }}</span>
+                    <span class="acad-hero-stat-label">Past Year Papers</span>
+                </div>
+                <div class="acad-hero-stat-item">
+                    <span class="acad-hero-stat-num">{{ total_projects }}</span>
+                    <span class="acad-hero-stat-label">Student Projects</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search & Department Filters -->
+        <div class="acad-search-bar-wrap">
+            <div class="acad-search-input-group">
+                <span class="acad-search-icon">🔍</span>
+                <input type="text" id="courseSearchInput" class="acad-search-input" 
+                       placeholder="Search courses by name or department (e.g. Computer Science, AI, Mechanical, MBA)..." 
+                       oninput="filterCourses()">
+                <span class="acad-search-kbd">/</span>
+            </div>
+
+            <div class="acad-filter-pills" id="deptFilterPills">
+                <button class="acad-pill active" onclick="setDepartmentFilter('all', this)">All Degrees ({{ courses|length }})</button>
+                <button class="acad-pill" onclick="setDepartmentFilter('engineering', this)">⚙️ Engineering</button>
+                <button class="acad-pill" onclick="setDepartmentFilter('computing', this)">💻 Computing &amp; IT</button>
+                <button class="acad-pill" onclick="setDepartmentFilter('management', this)">📈 Business &amp; Mgmt</button>
+                <button class="acad-pill" onclick="setDepartmentFilter('design', this)">🎨 Design &amp; Arts</button>
+                <button class="acad-pill" onclick="setDepartmentFilter('science', this)">🔬 Sciences</button>
+                <button class="acad-pill" onclick="setDepartmentFilter('law', this)">⚖️ Law</button>
+            </div>
+        </div>
+
+        <!-- Courses Grid -->
+        <div class="acad-courses-grid" id="coursesGrid">
+            {% for course in courses %}
+            <a href="/academics/{{ course.slug }}" class="acad-course-card" 
+               data-name="{{ course.name|lower }}" 
+               data-slug="{{ course.slug|lower }}" 
+               data-dept="{{ course.dept_code }}">
+                
+                <div class="acad-card-top">
+                    <span class="acad-dept-badge {{ course.dept_badge }}">
+                        {{ course.dept_icon }} {{ course.dept_name }}
+                    </span>
+                    <span class="acad-subject-count-pill">
+                        {{ course.subject_count }} Subjects
+                    </span>
+                </div>
+
+                <h2 class="acad-course-title">{{ course.name }}</h2>
+
+                <div class="acad-course-stats">
+                    <span class="acad-stat-badge notes">📚 {{ course.notes_count }} Notes</span>
+                    <span class="acad-stat-badge pyqs">📝 {{ course.pyqs_count }} PYQs</span>
+                    <span class="acad-stat-badge projects">🚀 {{ course.projects_count }} Projects</span>
+                    <span class="acad-course-card-arrow">Explore →</span>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+
+        <!-- Empty search state -->
+        <div id="noResultsState" class="acad-empty-state" style="display: none; margin-top: 24px;">
+            <div class="acad-empty-icon">🔎</div>
+            <h3 class="acad-empty-title">No matching courses found</h3>
+            <p class="acad-empty-sub">We couldn't find any course matching your search criteria. Try a different term or clear the filter.</p>
+            <button class="acad-btn-primary" onclick="resetSearch()">Clear Search</button>
+        </div>
+
+    </div>
+
+    <script>
+    let activeDept = 'all';
+
+    function setDepartmentFilter(dept, btn) {
+        activeDept = dept;
+        document.querySelectorAll('#deptFilterPills .acad-pill').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        filterCourses();
+    }
+
+    function filterCourses() {
+        const query = document.getElementById('courseSearchInput').value.trim().toLowerCase();
+        const cards = document.querySelectorAll('.acad-course-card');
+        let visibleCount = 0;
+
+        cards.forEach(card => {
+            const name = card.getAttribute('data-name');
+            const dept = card.getAttribute('data-dept');
+            const slug = card.getAttribute('data-slug');
+
+            const matchesDept = (activeDept === 'all' || dept === activeDept);
+            const matchesQuery = !query || name.includes(query) || slug.includes(query);
+
+            if (matchesDept && matchesQuery) {
+                card.style.display = 'flex';
+                visibleCount++;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        const noResults = document.getElementById('noResultsState');
+        noResults.style.display = visibleCount === 0 ? 'flex' : 'none';
+    }
+
+    function resetSearch() {
+        document.getElementById('courseSearchInput').value = '';
+        setDepartmentFilter('all', document.querySelector('#deptFilterPills .acad-pill'));
+    }
+
+    // Keyboard shortcut '/' to search
+    window.addEventListener('keydown', (e) => {
+        if (e.key === '/' && document.activeElement !== document.getElementById('courseSearchInput')) {
+            e.preventDefault();
+            document.getElementById('courseSearchInput').focus();
+        }
+    });
+    </script>
+
+</body>
+</html>

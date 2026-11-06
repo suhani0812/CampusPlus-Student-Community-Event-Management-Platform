@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Placements | CampusPlus</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/user_style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/academics.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/placements.css') }}">
+</head>
+<body class="academics-app">
+    <nav class="acad-nav">
+        <div class="acad-nav-left">
+            <a href="/dashboard" class="acad-brand">Campus<span>Plus</span></a>
+            <div class="acad-breadcrumbs">
+                <a href="/dashboard">Dashboard</a>
+                <span class="separator">/</span>
+                <span class="current">Placements</span>
+            </div>
+        </div>
+        <div class="acad-nav-right">
+            {% if user_email %}
+            <div class="acad-user-chip">
+                <div class="acad-user-avatar">{{ user_email[0].upper() }}</div>
+                <span>{{ user_email.split('@')[0] }}</span>
+            </div>
+            {% endif %}
+            <a href="/dashboard" class="acad-back-btn">← Dashboard</a>
+        </div>
+    </nav>
+
+    <main class="acad-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flash-wrap">
+              {% for category, message in messages %}
+                <div class="flash-msg {% if category == 'success' %}msg-success{% else %}msg-danger{% endif %}">
+                  <span>{{ message }}</span>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <section class="acad-hero placement-hero">
+            <div class="placement-hero-top">
+                <div>
+                    <div class="acad-hero-badge">💼 Career opportunities</div>
+                    <h1>Find your next opportunity</h1>
+                    <p>Explore placement drives, compare role requirements, and find the opportunities that fit your goals.</p>
+                </div>
+                <button class="acad-btn-primary placement-add-button" type="button" onclick="openDriveModal()">
+                    <span>+</span> {{ 'Post a Drive' if is_coordinator else 'Suggest a Drive' }}
+                </button>
+            </div>
+            <div class="acad-hero-stats">
+                <div class="acad-hero-stat-item">
+                    <span class="acad-hero-stat-num">{{ total_drives }}</span>
+                    <span class="acad-hero-stat-label">Visible Drives</span>
+                </div>
+                <div class="acad-hero-stat-item">
+                    <span class="acad-hero-stat-num">{{ company_count }}</span>
+                    <span class="acad-hero-stat-label">Companies</span>
+                </div>
+                <div class="acad-hero-stat-item">
+                    <span class="acad-hero-stat-num">{{ '%.1f'|format(avg_package) if avg_package else '—' }}</span>
+                    <span class="acad-hero-stat-label">Avg. Package (LPA)</span>
+                </div>
+                <div class="acad-hero-stat-item">
+                    <span class="acad-hero-stat-num">{{ '%.1f'|format(max_package) if max_package else '—' }}</span>
+                    <span class="acad-hero-stat-label">Highest Package (LPA)</span>
+                </div>
+                <div class="acad-hero-stat-item">
+                    <span class="acad-hero-stat-num">{{ dream_count }}</span>
+                    <span class="acad-hero-stat-label">15+ LPA</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="placement-filters" aria-label="Search and filter placement drives">
+            <label class="placement-search">
+                <span aria-hidden="true">🔍</span>
+                <input type="search" id="placementSearch" placeholder="Search company, role, JD, skills, or keywords..." oninput="filterDrives()">
+            </label>
+            <div class="placement-filter-row">
+                <label class="placement-filter">
+                    <span>Company</span>
+                    <select id="companyFilter" onchange="filterDrives()">
+                        <option value="">All companies</option>
+                        {% for company in companies %}
+                        <option value="{{ company.name|lower }}">{{ company.name }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label class="placement-filter">
+                    <span>Qualification / eligibility</span>
+                    <input type="search" id="qualificationFilter" placeholder="e.g. B.Tech, CGPA 7+" oninput="filterDrives()">
+                </label>
+                <label class="placement-filter">
+                    <span>Skills / JD keywords</span>
+                    <input type="search" id="skillsFilter" placeholder="e.g. Python, SQL, React" oninput="filterDrives()">
+                </label>
+                <label class="placement-filter">
+                    <span>Package</span>
+                    <select id="packageFilter" onchange="filterDrives()">
+                        <option value="">Any package</option>
+                        <option value="under6">Under 6 LPA</option>
+                        <option value="6to12">6–12 LPA</option>
+                        <option value="12to20">12–20 LPA</option>
+                        <option value="above20">20+ LPA</option>
+                    </select>
+                </label>
+            </div>
+            <div class="acad-filter-pills" id="driveStatusFilters">
+                <button type="button" class="acad-pill active" data-status-filter="all" onclick="setDriveStatus('all', this)">All drives</button>
+                <button type="button" class="acad-pill" data-status-filter="upcoming" onclick="setDriveStatus('upcoming', this)">Upcoming</button>
+                {% if drives|selectattr('status', 'equalto', 'pending')|list %}
+                <button type="button" class="acad-pill" data-status-filter="pending" onclick="setDriveStatus('pending', this)">My pending submissions</button>
+                {% endif %}
+            </div>
+            <div class="placement-result-count" id="placementResultCount" aria-live="polite"></div>
+        </section>
+
+        <section class="placements-grid" id="placementsGrid" aria-label="Placement drives">
+            {% for drive in drives %}
+            {% set searchable = ((drive.company_name or '') ~ ' ' ~ (drive.role_title or '') ~ ' ' ~ (drive.jd_description or '') ~ ' ' ~ (drive.eligibility or ''))|lower %}
+            <article class="placement-card"
+                     data-search="{{ searchable }}"
+                     data-company="{{ drive.company_name|lower }}"
+                     data-eligibility="{{ (drive.eligibility or '')|lower }}"
+                     data-jd="{{ ((drive.jd_description or '') ~ ' ' ~ (drive.eligibility or ''))|lower }}"
+                     data-package="{{ drive.package_lpa or '' }}"
+                     data-date="{{ drive.drive_date.strftime('%Y-%m-%d') if drive.drive_date else '' }}"
+                     data-status="{{ drive.status }}">
+                <div class="placement-card-top">
+                    <div class="placement-company-mark">
+                        {% if drive.company_logo_url %}
+                        <img src="{{ drive.company_logo_url }}" alt="{{ drive.company_name }} logo" loading="lazy">
+                        {% else %}
+                        <span aria-hidden="true">🏢</span>
+                        {% endif %}
+                    </div>
+                    <div class="placement-card-heading">
+                        <div class="placement-company-name">{{ drive.company_name }}</div>
+                        <h2>{{ drive.role_title }}</h2>
+                    </div>
+                    <span class="placement-status {{ 'pending' if drive.status == 'pending' else 'approved' }}">
+                        {{ 'Pending review' if drive.status == 'pending' else 'Open drive' }}
+                    </span>
+                </div>
+                <div class="placement-card-meta">
+                    <span>💰 {{ '%.2f'|format(drive.package_lpa|float) ~ ' LPA' if drive.package_lpa else 'Package not specified' }}</span>
+                    <span>🗓️ {{ drive.drive_date.strftime('%b %d, %Y') if drive.drive_date else 'Date to be announced' }}</span>
+                </div>
+                <p class="placement-card-description">
+                    {{ drive.jd_description or drive.eligibility or 'View this drive for role and eligibility details.' }}
+                </p>
+                {% if drive.eligibility %}
+                <div class="placement-eligibility">
+                    <strong>Eligibility</strong>
+                    <span>{{ drive.eligibility|truncate(150) }}</span>
+                </div>
+                {% endif %}
+                <a class="placement-card-link" href="{{ url_for('student.placement_detail', drive_id=drive.id) }}">
+                    View role details <span aria-hidden="true">→</span>
+                </a>
+            </article>
+            {% else %}
+            <div class="placement-empty">
+                <div aria-hidden="true">📭</div>
+                <h2>No placement drives yet</h2>
+                <p>When drives are published, they’ll appear here. You can suggest a drive using the button above.</p>
+            </div>
+            {% endfor %}
+        </section>
+        <div class="placement-empty placement-no-results" id="noPlacementResults" hidden>
+            <div aria-hidden="true">🔎</div>
+            <h2>No matching drives</h2>
+            <p>Try adjusting your search or filters.</p>
+        </div>
+    </main>
+
+    <div class="placement-modal-overlay" id="driveModal" role="dialog" aria-modal="true" aria-labelledby="driveModalTitle" hidden>
+        <div class="placement-modal">
+            <button class="placement-modal-close" type="button" aria-label="Close" onclick="closeDriveModal()">×</button>
+            <h2 id="driveModalTitle">{{ 'Post a Placement Drive' if is_coordinator else 'Suggest a Placement Drive' }}</h2>
+            <p class="placement-modal-intro">
+                {{ 'Publish a drive for students.' if is_coordinator else 'Your suggestion will be reviewed by a placement coordinator before it is published.' }}
+            </p>
+            <form action="{{ url_for('student.add_placement_drive') }}" method="POST" enctype="multipart/form-data">
+                <label class="placement-form-field">
+                    <span>Company</span>
+                    <select name="company_id" id="driveCompanySelect">
+                        <option value="">Choose a company</option>
+                        {% for company in companies %}
+                        <option value="{{ company.id }}">{{ company.name }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label class="placement-form-field">
+                    <span>Or enter a new company</span>
+                    <input type="text" name="new_company_name" id="newCompanyName" placeholder="Company name">
+                </label>
+                <label class="placement-form-field">
+                    <span>Role title <b>*</b></span>
+                    <input type="text" name="role_title" required maxlength="255" placeholder="e.g. Graduate Software Engineer">
+                </label>
+                <div class="placement-form-two">
+                    <label class="placement-form-field">
+                        <span>Package (LPA)</span>
+                        <input type="number" name="package_lpa" min="0" step="0.01" placeholder="e.g. 8.5">
+                    </label>
+                    <label class="placement-form-field">
+                        <span>Drive date</span>
+                        <input type="date" name="drive_date">
+                    </label>
+                </div>
+                <label class="placement-form-field">
+                    <span>Qualifications / eligibility</span>
+                    <textarea name="eligibility" rows="3" placeholder="Degrees, branches, CGPA, graduation year..."></textarea>
+                </label>
+                <label class="placement-form-field">
+                    <span>Job description and required skills</span>
+                    <textarea name="jd_description" rows="4" placeholder="Role summary, responsibilities, and required skills..."></textarea>
+                </label>
+                <label class="placement-form-field">
+                    <span>Job description file</span>
+                    <input type="file" name="jd_file" accept=".pdf,.doc,.docx">
+                </label>
+                <label class="placement-form-field">
+                    <span>Application link</span>
+                    <input type="url" name="apply_link" placeholder="https://...">
+                </label>
+                <div class="placement-form-actions">
+                    <button type="button" class="placement-cancel-button" onclick="closeDriveModal()">Cancel</button>
+                    <button type="submit" class="placement-submit-button">{{ 'Publish drive' if is_coordinator else 'Submit for review' }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let activeDriveStatus = 'all';
+
+        function setDriveStatus(status, button) {
+            activeDriveStatus = status;
+            document.querySelectorAll('#driveStatusFilters .acad-pill').forEach(pill => pill.classList.remove('active'));
+            button.classList.add('active');
+            filterDrives();
+        }
+
+        function filterDrives() {
+            const search = document.getElementById('placementSearch').value.trim().toLowerCase();
+            const company = document.getElementById('companyFilter').value;
+            const qualification = document.getElementById('qualificationFilter').value.trim().toLowerCase();
+            const skills = document.getElementById('skillsFilter').value.trim().toLowerCase();
+            const packageRange = document.getElementById('packageFilter').value;
+            const today = new Date().toISOString().slice(0, 10);
+            let visible = 0;
+
+            document.querySelectorAll('.placement-card').forEach(card => {
+                const packageValue = Number(card.dataset.package);
+                const date = card.dataset.date;
+                const packageMatch = !packageRange ||
+                    (packageRange === 'under6' && packageValue > 0 && packageValue < 6) ||
+                    (packageRange === '6to12' && packageValue >= 6 && packageValue < 12) ||
+                    (packageRange === '12to20' && packageValue >= 12 && packageValue < 20) ||
+                    (packageRange === 'above20' && packageValue >= 20);
+                const statusMatch = activeDriveStatus === 'all' ||
+                    (activeDriveStatus === 'pending' && card.dataset.status === 'pending') ||
+                    (activeDriveStatus === 'upcoming' && card.dataset.status === 'approved' && (!date || date >= today));
+                const matches = card.dataset.search.includes(search) &&
+                    card.dataset.company.includes(company) &&
+                    card.dataset.eligibility.includes(qualification) &&
+                    card.dataset.jd.includes(skills) &&
+                    packageMatch && statusMatch;
+                card.hidden = !matches;
+                if (matches) visible += 1;
+            });
+
+            document.getElementById('placementResultCount').textContent =
+                `${visible} ${visible === 1 ? 'drive' : 'drives'} found`;
+            document.getElementById('noPlacementResults').hidden =
+                visible !== 0 || document.querySelectorAll('.placement-card').length === 0;
+        }
+
+        function openDriveModal() {
+            document.getElementById('driveModal').hidden = false;
+            document.body.classList.add('placement-modal-open');
+        }
+
+        function closeDriveModal() {
+            document.getElementById('driveModal').hidden = true;
+            document.body.classList.remove('placement-modal-open');
+        }
+
+        document.getElementById('driveModal').addEventListener('click', event => {
+            if (event.target.id === 'driveModal') closeDriveModal();
+        });
+        document.addEventListener('keydown', event => {
+            if (event.key === 'Escape') closeDriveModal();
+        });
+        filterDrives();
+    </script>
+</body>
+</html>

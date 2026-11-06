@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Register | CampusPlus</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/user_style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/signup.css') }}">
+</head>
+<script>
+function togglePass(inputId, icon) {
+    const input = document.getElementById(inputId);
+    if (input.type === "password") {
+        input.type = "text";
+        icon.textContent = "🙈";
+    } else {
+        input.type = "password";
+        icon.textContent = "👁️";
+    }
+}
+</script>
+<body class="auth-page">
+    <div class="auth-card">
+        <div class="signup-emoji">✨</div>
+        <h2>Create Account</h2>
+        <span class="domain-badge">🎓 MIT-WPU students only</span>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="flash-msg {% if category == 'success' %}msg-success{% else %}msg-danger{% endif %}">
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <form action="/signup-process" method="POST" id="signupForm">
+            <input
+                type="text"
+                name="full_name"
+                id="nameInput"
+                placeholder="Full name"
+                required
+                class="input-field"
+                autocomplete="name"
+            >
+            <input
+                type="email"
+                name="u_email"
+                id="emailInput"
+                placeholder="yourname@mitwpu.edu.in"
+                required
+                class="input-field"
+                autocomplete="email"
+            >
+            <p class="hint" id="emailHint">
+                ⚠ Must be a @mitwpu.edu.in address
+            </p>
+
+            <div class="pass-wrap">
+                <input type="password" name="u_pass" id="signupPass"
+                       placeholder="Set Secure Password (min 8 chars)"
+                       required class="input-field with-toggle" autocomplete="new-password">
+                <span onclick="togglePass('signupPass', this)" class="pass-toggle">👁️</span>
+            </div>
+
+            <div class="strength-bar">
+                <div class="strength-fill" id="strengthFill"></div>
+            </div>
+
+            <button type="submit" class="btn-primary" id="signupSubmit">
+                Send OTP &amp; Register
+            </button>
+        </form>
+
+        <a href="/" class="back-link">← Back to Login</a>
+    </div>
+
+    <script>
+    const emailInput = document.getElementById("emailInput");
+    const emailHint  = document.getElementById("emailHint");
+    const passInput  = document.getElementById("signupPass");
+    const fill       = document.getElementById("strengthFill");
+    const colors     = ["#e53e3e","#ed8936","#ecc94b","#48bb78"];
+    const labels     = ["Weak","Fair","Good","Strong"];
+
+    emailInput.addEventListener("blur", () => {
+        const ok = emailInput.value.endsWith("@mitwpu.edu.in");
+        emailHint.style.display = ok ? "none" : "block";
+    });
+
+    passInput.addEventListener("input", () => {
+        const p = passInput.value;
+        let score = 0;
+        if (p.length >= 8)  score++;
+        if (/[A-Z]/.test(p)) score++;
+        if (/[0-9]/.test(p)) score++;
+        if (/[^A-Za-z0-9]/.test(p)) score++;
+        fill.style.width      = `${score * 25}%`;
+        fill.style.background = colors[score - 1] || "#e0e0e0";
+    });
+
+    document.getElementById("signupForm").addEventListener("submit", e => {
+        if (!emailInput.value.endsWith("@mitwpu.edu.in")) {
+            e.preventDefault();
+            emailHint.style.display = "block";
+            emailInput.focus();
+        }
+    });
+    </script>
+</body>
+</html>

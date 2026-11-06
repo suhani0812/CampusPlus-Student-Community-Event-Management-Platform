@@ -1,0 +1,171 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background: #f5f5fa;
+    min-height: 100vh;
+    display: flex;
+}
+
+/* ── Sidebar ──────────────────────────────── */
+.sidebar {
+    width: 240px;
+    background: #16162a;
+    color: #fff;
+    min-height: 100vh;
+    padding: 24px 0;
+    position: sticky;
+    top: 0;
+    flex-shrink: 0;
+}
+
+.sidebar-brand {
+    font-size: 1.2rem;
+    font-weight: 700;
+    padding: 0 24px 24px;
+    border-bottom: 1px solid #2a2a45;
+    margin-bottom: 16px;
+}
+.sidebar-brand span { color: #8b5cf6; }
+.sidebar-tag {
+    display: block;
+    font-size: .68rem;
+    color: #8b5cf6;
+    font-weight: 700;
+    letter-spacing: .08em;
+    margin-top: 2px;
+}
+
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 24px;
+    color: #b8b8d0;
+    text-decoration: none;
+    font-size: .88rem;
+    font-weight: 500;
+    border-left: 3px solid transparent;
+    transition: all .15s;
+}
+.sidebar-link:hover {
+    background: #1f1f3a;
+    color: #fff;
+}
+.sidebar-link.active {
+    background: #1f1f3a;
+    color: #fff;
+    border-left-color: #8b5cf6;
+}
+.sidebar-link .badge {
+    margin-left: auto;
+    background: #ef4444;
+    color: #fff;
+    font-size: .68rem;
+    font-weight: 700;
+    padding: 1px 7px;
+    border-radius: 10px;
+}
+
+.sidebar-footer {
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid #2a2a45;
+}
+
+.logout-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 24px;
+    color: #ef4444;
+    text-decoration: none;
+    font-size: .88rem;
+    font-weight: 600;
+}
+.logout-link:hover { background: #1f1f3a; }
+
+/* ── Main content ─────────────────────────── */
+.main {
+    flex: 1;
+    padding: 32px 36px;
+}
+
+.main-header {
+    margin-bottom: 28px;
+}
+.main-header h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1a1a2e;
+}
+.main-header p {
+    color: #888;
+    font-size: .88rem;
+    margin-top: 4px;
+}
+
+.flash-wrap { margin-bottom: 20px; }
+
+/* ── Stat cards ───────────────────────────── */
+.stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+}
+
+.stat-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 20px;
+    border: 1.5px solid #eee;
+}
+
+.stat-card .stat-icon { font-size: 1.5rem; margin-bottom: 8px; }
+.stat-card .stat-num {
+    font-size: 1.7rem;
+    font-weight: 700;
+    color: #1a1a2e;
+}
+.stat-card .stat-label {
+    font-size: .78rem;
+    color: #999;
+    margin-top: 2px;
+}
+.stat-card.alert .stat-num { color: #f59e0b; }
+
+/* ── Quick action cards ───────────────────── */
+.section-label {
+    font-size: .75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #aaa;
+    margin-bottom: 14px;
+}
+
+.action-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+}
+
+.action-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 22px;
+    border: 1.5px solid #eee;
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: transform .15s, box-shadow .15s;
+}
+.action-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,.08);
+}
+.action-card .icon { font-size: 1.6rem; }
+.action-card .title { font-weight: 700; color: #1a1a2e; font-size: .92rem; }
+.action-card .sub { font-size: .78rem; color: #999; }

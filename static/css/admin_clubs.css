@@ -1,0 +1,114 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', sans-serif; background: #f5f5fa; min-height: 100vh; display: flex; }
+
+.sidebar { width: 240px; background: #16162a; color: #fff; min-height: 100vh; padding: 24px 0; position: sticky; top: 0; flex-shrink: 0; }
+.sidebar-brand { font-size: 1.2rem; font-weight: 700; padding: 0 24px 24px; border-bottom: 1px solid #2a2a45; margin-bottom: 16px; }
+.sidebar-brand span { color: #8b5cf6; }
+.sidebar-tag { display: block; font-size: .68rem; color: #8b5cf6; font-weight: 700; letter-spacing: .08em; margin-top: 2px; }
+.sidebar-link { display: flex; align-items: center; gap: 12px; padding: 12px 24px; color: #b8b8d0; text-decoration: none; font-size: .88rem; font-weight: 500; border-left: 3px solid transparent; transition: all .15s; }
+.sidebar-link:hover { background: #1f1f3a; color: #fff; }
+.sidebar-link.active { background: #1f1f3a; color: #fff; border-left-color: #8b5cf6; }
+.sidebar-footer { margin-top: 24px; padding-top: 16px; border-top: 1px solid #2a2a45; }
+.logout-link { display: flex; align-items: center; gap: 12px; padding: 12px 24px; color: #ef4444; text-decoration: none; font-size: .88rem; font-weight: 600; }
+.logout-link:hover { background: #1f1f3a; }
+
+.main { flex: 1; padding: 32px 36px; }
+.main-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+.main-header h1 { font-size: 1.5rem; font-weight: 700; color: #1a1a2e; }
+.main-header p { color: #888; font-size: .88rem; margin-top: 4px; }
+.flash-wrap { margin-bottom: 20px; }
+
+.btn-add {
+    background: #8b5cf6; color: #fff; border: none; padding: 10px 20px;
+    border-radius: 8px; font-size: .85rem; font-weight: 700; cursor: pointer;
+}
+.btn-add:hover { background: #7c3aed; }
+
+/* Club cards grid */
+.club-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 18px;
+}
+.club-card {
+    background: #fff;
+    border-radius: 14px;
+    border: 1.5px solid #eee;
+    padding: 20px;
+}
+.club-cat {
+    display: inline-block;
+    font-size: .7rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    text-transform: capitalize;
+}
+.cat-technical  { background: #eef2ff; color: #4f46e5; }
+.cat-cultural   { background: #fdf2f8; color: #db2777; }
+.cat-social     { background: #ecfdf5; color: #10b981; }
+.cat-sports     { background: #fff7ed; color: #f59e0b; }
+.cat-innovation { background: #eff6ff; color: #3b82f6; }
+.cat-other      { background: #f3f4f6; color: #6b7280; }
+
+.club-name { font-size: 1.02rem; font-weight: 700; color: #1a1a2e; margin-bottom: 6px; }
+.club-desc {
+    font-size: .82rem; color: #888; line-height: 1.5; margin-bottom: 12px;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+.club-meta { font-size: .76rem; color: #aaa; margin-bottom: 14px; }
+.club-meta a { color: #4f46e5; text-decoration: none; }
+
+.club-actions { display: flex; gap: 8px; }
+.btn-edit, .btn-delete {
+    flex: 1; padding: 8px 0; border-radius: 8px; font-size: .8rem; font-weight: 700;
+    border: none; cursor: pointer; text-align: center; text-decoration: none;
+}
+.btn-edit { background: #eef2ff; color: #4f46e5; }
+.btn-edit:hover { background: #e0e7ff; }
+.btn-delete { background: #fef2f2; color: #ef4444; }
+.btn-delete:hover { background: #fee2e2; }
+
+/* Modal */
+.modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.4);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+}
+.modal-overlay.active { display: flex; }
+.modal-box {
+    background: #fff;
+    border-radius: 16px;
+    padding: 28px;
+    width: 100%;
+    max-width: 480px;
+    max-height: 88vh;
+    overflow-y: auto;
+}
+.modal-title { font-size: 1.15rem; font-weight: 700; color: #1a1a2e; margin-bottom: 18px; }
+
+.form-group { margin-bottom: 14px; }
+.form-label { display: block; font-size: .8rem; font-weight: 600; color: #444; margin-bottom: 5px; }
+.form-input, .form-select, .form-textarea {
+    width: 100%; padding: 9px 12px; border: 1.5px solid #ddd; border-radius: 8px;
+    font-size: .87rem; font-family: 'Segoe UI', sans-serif; outline: none;
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus { border-color: #8b5cf6; }
+.form-textarea { resize: vertical; min-height: 70px; }
+
+.modal-actions { display: flex; gap: 10px; margin-top: 18px; }
+.btn-cancel {
+    flex: 1; padding: 10px; border-radius: 8px; border: 1.5px solid #ddd;
+    background: #fff; color: #555; font-weight: 700; font-size: .85rem; cursor: pointer;
+}
+.btn-save {
+    flex: 1; padding: 10px; border-radius: 8px; border: none;
+    background: #8b5cf6; color: #fff; font-weight: 700; font-size: .85rem; cursor: pointer;
+}
+
+.delete-form { flex: 1; }
+.delete-form-btn { width: 100%; }

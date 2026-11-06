@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verify OTP | CampusPlus</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/user_style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/verify_otp.css') }}">
+</head>
+<body class="auth-page">
+    <div class="auth-card">
+        <div class="otp-emoji">📬</div>
+        <h2>Check Your Email</h2>
+        <div class="email-badge">{{ email }}</div>
+        <p class="otp-desc">
+            Enter the 6-digit code we sent. It expires in 10 minutes.
+        </p>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="flash-msg {% if category == 'success' %}msg-success{% else %}msg-danger{% endif %}">
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <!-- OTP form -->
+        <form action="/verify-otp" method="POST" id="otpForm">
+            <!-- Hidden single field that holds the joined OTP -->
+            <input type="hidden" name="otp" id="otpHidden">
+
+            <div class="otp-row">
+                {% for i in range(6) %}
+                <input
+                    type="text"
+                    inputmode="numeric"
+                    maxlength="1"
+                    class="otp-box"
+                    data-index="{{ i }}"
+                    autocomplete="off"
+                >
+                {% endfor %}
+            </div>
+
+            <div id="countdown">Code expires in <span id="timer">10:00</span></div>
+
+            <button type="submit" class="btn-primary" id="verifyBtn">
+                Verify &amp; Create Account
+            </button>
+        </form>
+
+        <!-- Resend form -->
+            <form action="/resend-otp" method="POST" class="resend-form">
+            <button class="resend-btn" id="resendBtn" disabled type="submit">
+                Resend OTP
+            </button>
+        </form>
+
+            <a href="/signup" class="back-link">
+            ← Use a different email
+        </a>
+    </div>
+
+    <script>
+    // ── OTP box navigation ─────────────────────────────────────────────────
+    const boxes   = document.querySelectorAll(".otp-box");
+    const hidden  = document.getElementById("otpHidden");
+    const form    = document.getElementById("otpForm");
+    const resend  = document.getElementById("resendBtn");
+
+    boxes.forEach((box, idx) => {
+        box.addEventListener("input", e => {
+            const val = e.target.value.replace(/\D/g, "");
+            e.target.value = val;
+            e.target.classList.toggle("filled", val.length === 1);
+            if (val && idx < boxes.length - 1) boxes[idx + 1].focus();
+            syncHidden();
+        });
+
+        box.addEventListener("keydown", e => {
+            if (e.key === "Backspace" && !e.target.value && idx > 0) {
+                boxes[idx - 1].value = "";
+                boxes[idx - 1].classList.remove("filled");
+                boxes[idx - 1].focus();
+                syncHidden();
+            }
+            // Allow pasting
+        });
+
+        box.addEventListener("paste", e => {
+            e.preventDefault();
+            const data = (e.clipboardData || window.clipboardData)
+                .getData("text").replace(/\D/g, "").slice(0, 6);
+            [...data].forEach((ch, i) => {
+                if (boxes[i]) {
+                    boxes[i].value = ch;
+                    boxes[i].classList.add("filled");
+                }
+            });
+            if (data.length < 6) boxes[data.length]?.focus();
+            else boxes[5].focus();
+            syncHidden();
+        });
+    });
+
+    function syncHidden() {
+        hidden.value = [...boxes].map(b => b.value).join("");
+    }
+
+    form.addEventListener("submit", e => {
+        syncHidden();
+        if (hidden.value.length !== 6) {
+            e.preventDefault();
+            alert("Please enter all 6 digits.");
+        }
+    });
+
+    // ── Countdown timer ────────────────────────────────────────────────────
+    let seconds = 10 * 60;
+    let resendUnlock = 60; // allow resend after 60 s
+
+    const timerEl = document.getElementById("timer");
+
+    const interval = setInterval(() => {
+        seconds--;
+        resendUnlock--;
+
+        if (resendUnlock <= 0) resend.disabled = false;
+
+        const m = String(Math.floor(seconds / 60)).padStart(2, "0");
+        const s = String(seconds % 60).padStart(2, "0");
+        timerEl.textContent = `${m}:${s}`;
+
+        if (seconds <= 0) {
+            clearInterval(interval);
+            timerEl.textContent = "00:00";
+            timerEl.style.color = "#e53e3e";
+            document.getElementById("verifyBtn").disabled = true;
+            document.getElementById("verifyBtn").textContent = "Code Expired";
+        }
+    }, 1000);
+
+    // Focus first box on load
+    boxes[0].focus();
+    </script>
+</body>
+</html>

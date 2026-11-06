@@ -1,0 +1,326 @@
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   CampusPlus — Accommodations Stylesheet
+   Modern card-based layout, photo galleries, and reviews
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+.accomm-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 24px;
+}
+
+@media (max-width: 640px) {
+  .accomm-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.accomm-card {
+  background: #fff;
+  border-radius: var(--radius-xl);
+  border: 1.5px solid var(--border-color);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s, border-color 0.22s;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+}
+
+.accomm-card:hover {
+  transform: translateY(-4px);
+  border-color: #cbd5e1;
+  box-shadow: var(--shadow-xl);
+}
+
+.accomm-image-wrap {
+  height: 200px;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #0f172a, #334155);
+}
+
+.accomm-image-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.accomm-card:hover .accomm-image-wrap img {
+  transform: scale(1.05);
+}
+
+.accomm-image-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(15, 23, 42, 0.75) 0%, transparent 60%);
+}
+
+/* Floating Type Badge */
+.accomm-type-pill {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  backdrop-filter: blur(8px);
+  color: #fff;
+}
+
+.accomm-type-pill.pg {
+  background: rgba(79, 70, 229, 0.9);
+}
+
+.accomm-type-pill.hostel {
+  background: rgba(16, 185, 129, 0.9);
+}
+
+.accomm-type-pill.flat {
+  background: rgba(245, 158, 11, 0.9);
+}
+
+/* Floating Rent Pill */
+.accomm-rent-pill {
+  position: absolute;
+  bottom: 12px;
+  right: 14px;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-family: var(--font-heading);
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: -0.2px;
+}
+
+.accomm-rent-pill span {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: #cbd5e1;
+}
+
+/* Rating Chip */
+.accomm-rating-chip {
+  position: absolute;
+  bottom: 12px;
+  left: 14px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.accomm-rating-chip .star-icon {
+  color: #f59e0b;
+}
+
+/* Card Body */
+.accomm-body {
+  padding: 20px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.accomm-title {
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 8px;
+  line-height: 1.35;
+}
+
+.accomm-address {
+  font-size: 0.84rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.accomm-contact-box {
+  background: #f8fafc;
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  margin-top: auto;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid #f1f5f9;
+}
+
+/* Card Actions */
+.accomm-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.btn-whatsapp-chat {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #25d366;
+  color: #fff;
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.btn-whatsapp-chat:hover {
+  background: #128c7e;
+  transform: translateY(-1px);
+}
+
+/* ── Accommodation Detail View ──────────────── */
+.accomm-detail-header-card {
+  background: #fff;
+  border-radius: var(--radius-xl);
+  border: 1.5px solid var(--border-color);
+  padding: 30px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow-sm);
+}
+
+.accomm-detail-top-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.accomm-detail-title {
+  font-family: var(--font-heading);
+  font-size: 2.1rem;
+  font-weight: 800;
+  color: var(--text-main);
+  line-height: 1.25;
+}
+
+.accomm-detail-rent-display {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.accomm-rent-big {
+  font-family: var(--font-heading);
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--primary);
+  line-height: 1;
+}
+
+.accomm-rent-period {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+/* Detail Gallery Grid */
+.accomm-gallery-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  grid-template-rows: repeat(2, 160px);
+  gap: 12px;
+  margin-bottom: 28px;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  .accomm-gallery-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+  }
+}
+
+.accomm-gallery-item-main {
+  grid-row: span 2;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.accomm-gallery-item-main img,
+.accomm-gallery-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.25s ease;
+}
+
+.accomm-gallery-item-main:hover img,
+.accomm-gallery-item:hover img {
+  transform: scale(1.03);
+}
+
+.accomm-gallery-item {
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+/* Reviews List */
+.review-item {
+  padding: 16px 0;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.review-item:last-child {
+  border-bottom: none;
+}
+
+.review-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.reviewer-name {
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--text-main);
+}
+
+.review-stars {
+  color: #f59e0b;
+  font-size: 0.88rem;
+}
+
+.review-date {
+  font-size: 0.75rem;
+  color: var(--text-light);
+}
+
+.review-comment {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}

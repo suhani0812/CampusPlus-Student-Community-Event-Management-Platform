@@ -1,0 +1,62 @@
+/* Page background and card top accent */
+.auth-page { background: #f8f9fa; }
+.auth-card { border-top: 5px solid #4f46e5; max-width: 460px; margin: 48px auto; background: #fff; padding: 28px; border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,.06); text-align: center; }
+
+.otp-emoji { font-size: 2.8rem; margin-bottom: 8px; }
+.otp-desc { color:#666; font-size:.93rem; margin:0 0 6px; }
+
+/* OTP input row */
+.otp-row {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin: 20px 0;
+}
+.otp-box {
+    width: 48px;
+    height: 56px;
+    font-size: 1.6rem;
+    font-weight: 700;
+    text-align: center;
+    border: 2px solid #dee2e6;
+    border-radius: 10px;
+    outline: none;
+    transition: border-color .2s, box-shadow .2s;
+    background: #fff;
+    color: #333;
+}
+.otp-box:focus {
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79,70,229,.15);
+}
+.otp-box.filled { border-color: #28a745; }
+
+.email-badge {
+    font-size: .85rem;
+    background: #f0f0ff;
+    color: #4f46e5;
+    padding: 6px 14px;
+    border-radius: 20px;
+    display: inline-block;
+    margin-bottom: 18px;
+    font-weight: 600;
+}
+
+#countdown { font-size: .85rem; color: #888; margin-top: 8px; }
+#countdown span { font-weight: 700; color: #e53e3e; }
+
+.resend-btn {
+    background: none;
+    border: none;
+    color: #4f46e5;
+    cursor: pointer;
+    font-size: .9rem;
+    text-decoration: underline;
+    padding: 0;
+    margin-top: 12px;
+}
+.resend-btn:disabled { color: #aaa; cursor: not-allowed; text-decoration: none; }
+
+#verifyBtn { background:#4f46e5; margin-top:16px; }
+.resend-form { margin-top:8px; }
+.back-link { margin-top:14px; display:block; }

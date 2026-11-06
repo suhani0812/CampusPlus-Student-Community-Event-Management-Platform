@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ subject.name }} — {% if content_type == 'notes' %}Notes{% else %}PYQs{% endif %} | {{ course.name }}
+    </title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/academics.css') }}">
+</head>
+
+<body class="academics-app">
+
+    <!-- Top Navigation Bar -->
+    <nav class="acad-nav">
+        <div class="acad-nav-left">
+            <a href="/dashboard" class="acad-brand">Campus<span>Plus</span></a>
+            <div class="acad-breadcrumbs">
+                <a href="/dashboard">Dashboard</a>
+                <span class="separator">/</span>
+                <a href="/academics">Academics</a>
+                <span class="separator">/</span>
+                <a href="/academics/{{ course.slug }}">{{ course.name }}</a>
+                <span class="separator">/</span>
+                <a href="/academics/{{ course.slug }}/{{ content_type }}">{% if content_type == 'notes' %}Notes{% else
+                    %}PYQs{% endif %}</a>
+                <span class="separator">/</span>
+                <span class="current">{{ subject.name }}</span>
+            </div>
+        </div>
+        <div class="acad-nav-right">
+            {% if user_email %}
+            <div class="acad-user-chip">
+                <div class="acad-user-avatar">{{ user_email[0].upper() }}</div>
+                <span>{{ user_email.split('@')[0] }}</span>
+            </div>
+            {% endif %}
+            <a href="/academics/{{ course.slug }}/{{ content_type }}" class="acad-back-btn">← All Subjects</a>
+        </div>
+    </nav>
+
+    <div class="acad-container">
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="flash-wrap">
+            {% for category, message in messages %}
+            <div class="flash-msg {% if category == 'success' %}msg-success{% else %}msg-danger{% endif %}">
+                <span>{{ message }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        <!-- Subject Header Banner -->
+        <div
+            style="background: #fff; border: 1px solid var(--border-color); border-radius: var(--radius-xl); padding: 28px 32px; margin-bottom: 28px; box-shadow: var(--shadow-sm); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px;">
+            <div>
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                    <span class="acad-dept-badge {{ dept.badge }}">{{ dept.icon }} {{ course.name }}</span>
+                    <span class="acad-subject-count-pill">
+                        {{ files|length }} {% if content_type == 'notes' %}Notes{% else %}Papers{% endif %} Available
+                    </span>
+                </div>
+                <h1
+                    style="font-family: var(--font-heading); font-size: 1.85rem; font-weight: 800; color: var(--text-main); margin-bottom: 4px;">
+                    {{ subject.name }}
+                </h1>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">
+                    {% if content_type == 'notes' %}
+                    Verified study notes, lecture slides, unit summaries, and formula sheets.
+                    {% else %}
+                    University previous year examination question papers with solved answers.
+                    {% endif %}
+                </p>
+            </div>
+
+            <!-- Toggle Between Notes & PYQs for this exact subject -->
+            <div style="display: flex; gap: 10px;">
+                {% if content_type == 'notes' %}
+                <a href="/academics/{{ course.slug }}/pyqs/{{ subject.id }}" class="acad-tab-btn">
+                    <span>📝 Switch to PYQs ({{ alt_count }})</span>
+                </a>
+                {% else %}
+                <a href="/academics/{{ course.slug }}/notes/{{ subject.id }}" class="acad-tab-btn">
+                    <span>📚 Switch to Notes ({{ alt_count }})</span>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Layout: 2 Columns (Files List + Upload Form) -->
+        <div class="acad-subject-detail-layout">
+
+            <!-- Left / Main Column: Files List -->
+            <div>
+                <!-- Search bar for files -->
+                <div class="acad-search-bar-wrap" style="padding: 12px 16px; margin-bottom: 20px;">
+                    <div class="acad-search-input-group">
+                        <span class="acad-search-icon">🔍</span>
+                        <input type="text" id="fileSearchInput" class="acad-search-input"
+                            placeholder="Search files by title or description..." oninput="filterFiles()">
+                        <span class="acad-search-kbd">/</span>
+                    </div>
+                </div>
+
+                <!-- Files List -->
+                <div class="acad-files-list" id="filesList">
+                    {% for f in files %}
+                    <div class="acad-file-card" data-title="{{ f.title|lower }}"
+                        data-desc="{{ (f.description or '')|lower }}">
+
+                        <div class="acad-file-left">
+                            <div class="acad-file-icon-box {% if content_type == 'pyqs' %}pyqs{% endif %}">
+                                {% if content_type == 'notes' %}📄{% else %}📝{% endif %}
+                            </div>
+                            <div class="acad-file-info">
+                                <div class="acad-file-title">{{ f.title }}</div>
+                                {% if f.description %}
+                                <div class="acad-file-desc">{{ f.description }}</div>
+                                {% endif %}
+                                <div class="acad-file-meta-row">
+                                    <span>Uploaded by <strong>{{ f.uploader_name or f.uploader_email.split('@')[0]
+                                            }}</strong></span>
+                                    <span>•</span>
+                                    <span>{{ f.created_at.strftime('%b %d, %Y') if f.created_at else 'Recently'
+                                        }}</span>
+                                    {% if f.status == 'pending' %}
+                                    <span>•</span>
+                                    <span class="acad-status-pending">⏳ Pending Admin Review</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="acad-file-actions">
+                            <a href="{{ f.file_url }}" target="_blank" rel="noopener"
+                                class="acad-btn-download {% if content_type == 'pyqs' %}pyqs{% endif %}">
+                                <span>View File</span>
+                                <span>↗</span>
+                            </a>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="acad-empty-state">
+                        <div class="acad-empty-icon">📂</div>
+                        <h3 class="acad-empty-title">
+                            No {% if content_type == 'notes' %}notes{% else %}PYQs{% endif %} available yet
+                        </h3>
+                        <p class="acad-empty-sub">
+                            Help fellow batchmates by uploading the syllabus notes, unit guides, or exam papers for {{
+                            subject.name }}!
+                        </p>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- No match search state -->
+                <div id="noFilesMatch" class="acad-empty-state" style="display: none; margin-top: 16px;">
+                    <div class="acad-empty-icon">🔎</div>
+                    <h3 class="acad-empty-title">No files match your search</h3>
+                    <p class="acad-empty-sub">Try searching with different keywords or clear the search input.</p>
+                </div>
+            </div>
+
+            <!-- Right Column: Upload Form Card -->
+            <div>
+                <div class="acad-upload-card">
+                    <h3>
+                        <span>{% if content_type == 'notes' %}📤{% else %}📝{% endif %}</span>
+                        Upload {% if content_type == 'notes' %}Notes{% else %}PYQ Paper{% endif %}
+                    </h3>
+                    <p>
+                        Contribute study material for <strong>{{ subject.name }}</strong>. Submissions will be verified
+                        by moderators.
+                    </p>
+
+                    <form action="/academics/{{ course.slug }}/{{ content_type }}/{{ subject.id }}/upload" method="POST"
+                        enctype="multipart/form-data">
+
+                        <div class="acad-form-group">
+                            <label for="fileTitle">Document Title *</label>
+                            <input type="text" id="fileTitle" name="title" class="acad-form-input"
+                                placeholder="{% if content_type == 'notes' %}e.g. Unit 2 Balanced Trees Complete Notes{% else %}e.g. End Semester Exam Dec 2024 with Solutions{% endif %}"
+                                required>
+                        </div>
+
+                        <div class="acad-form-group">
+                            <label for="fileDesc">Description / Coverage (Optional)</label>
+                            <textarea id="fileDesc" name="description" class="acad-form-textarea"
+                                placeholder="e.g. Includes lecture handwritten diagrams, code examples in C++, and professor handouts..."></textarea>
+                        </div>
+
+                        <div class="acad-form-group">
+                            <label>File Attachment *</label>
+                            <div class="acad-file-dropzone" id="fileDropzone">
+                                <input type="file" name="content_file" id="contentFileInput"
+                                    accept=".pdf,.ppt,.pptx,.doc,.docx,.zip,.rar" required
+                                    onchange="handleFileSelected(this)">
+                                <div class="acad-dropzone-icon">📁</div>
+                                <div class="acad-dropzone-text">Click or drag file here</div>
+                                <div class="acad-dropzone-hint">PDF, DOCX, PPTX (Max 50MB)</div>
+                                <div class="acad-selected-file-name" id="selectedFileName"></div>
+                            </div>
+                        </div>
+
+                        <button type="submit"
+                            class="acad-btn-primary btn-block {% if content_type == 'pyqs' %}acad-btn-emerald{% endif %}"
+                            style="margin-top: 10px;">
+                            <span>Upload {% if content_type == 'notes' %}Notes{% else %}PYQ Paper{% endif %}</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script>
+        function filterFiles() {
+            const query = document.getElementById('fileSearchInput').value.trim().toLowerCase();
+            const cards = document.querySelectorAll('.acad-file-card');
+            let visible = 0;
+
+            cards.forEach(card => {
+                const title = card.getAttribute('data-title') || '';
+                const desc = card.getAttribute('data-desc') || '';
+                if (!query || title.includes(query) || desc.includes(query)) {
+                    card.style.display = 'flex';
+                    visible++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            const noMatch = document.getElementById('noFilesMatch');
+            if (noMatch) {
+                noMatch.style.display = (visible === 0 && cards.length > 0) ? 'flex' : 'none';
+            }
+        }
+
+        function handleFileSelected(input) {
+            const label = document.getElementById('selectedFileName');
+            if (input.files && input.files[0]) {
+                label.innerText = '✓ ' + input.files[0].name;
+            } else {
+                label.innerText = '';
+            }
+        }
+
+        // Keyboard shortcut '/' to search
+        window.addEventListener('keydown', (e) => {
+            if (e.key === '/' && document.activeElement !== document.getElementById('fileSearchInput')) {
+                e.preventDefault();
+                document.getElementById('fileSearchInput').focus();
+            }
+        });
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | CampusPlus</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/user_style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="navbar-brand">Campus<span>Plus</span></div>
+        <div class="navbar-right">
+            <span class="role-badge">{{ primary_role }}</span>
+            <div class="user-pill">
+                <div class="user-avatar">{{ email[0].upper() }}</div>
+                {{ email.split('@')[0] }}
+            </div>
+            <a href="/logout" class="logout-btn">Log out</a>
+        </div>
+    </nav>
+
+    <div class="page-body">
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flash-wrap">
+              {% for category, message in messages %}
+                <div class="flash-msg {% if category == 'success' %}msg-success{% else %}msg-danger{% endif %}">
+                  {{ message }}
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <div class="greeting">
+            <h1>Hey, {{ email.split('@')[0].replace('.', ' ').title() }} 👋</h1>
+            <p>Here's what's happening on campus today.</p>
+        </div>
+
+        <p class="section-label">Sections</p>
+        <div class="nav-grid">
+            <a href="/academics"      class="nav-card card-academics">
+                <div class="icon">📚</div>
+                <div class="card-title">Academics</div>
+                <div class="card-sub">Notes, PYQs &amp; projects by course</div>
+                <div class="card-arrow">Explore →</div>
+            </a>
+            <a href="/events"         class="nav-card card-events">
+                <div class="icon">🎉</div>
+                <div class="card-title">Events</div>
+                <div class="card-sub">Hackathons, concerts &amp; more</div>
+                <div class="card-arrow">Explore →</div>
+            </a>
+            <a href="/clubs"          class="nav-card card-clubs">
+                <div class="icon">🏛️</div>
+                <div class="card-title">Clubs</div>
+                <div class="card-sub">Find clubs &amp; apply to join</div>
+                <div class="card-arrow">Explore →</div>
+            </a>
+            <a href="/accommodations" class="nav-card card-accomm">
+                <div class="icon">🏠</div>
+                <div class="card-title">Accommodations</div>
+                <div class="card-sub">Hostels, PGs &amp; flats nearby</div>
+                <div class="card-arrow">Explore →</div>
+            </a>
+            <a href="/placements"     class="nav-card card-placements">
+                <div class="icon">💼</div>
+                <div class="card-title">Placements</div>
+                <div class="card-sub">Companies, roles &amp; JDs</div>
+                <div class="card-arrow">Explore →</div>
+            </a>
+            <a href="/role-request"   class="nav-card card-role">
+                <div class="icon">🎓</div>
+                <div class="card-title">My Role</div>
+                <div class="card-sub">View or request a role upgrade</div>
+                <div class="card-arrow">Manage →</div>
+            </a>
+        </div>
+
+        <p class="section-label">What's new</p>
+        <div class="live-grid">
+
+            <div class="live-card" style="--dot-color:#4f46e5;">
+                <div class="live-card-header">
+                    <div class="dot"></div>
+                    <h3>Recent Uploads</h3>
+                </div>
+                {% if recent_uploads %}
+                  {% for item in recent_uploads %}
+                    <div class="live-item">
+                        <div class="li-icon">
+                            {% if item.type == 'notes' %}📄{% elif item.type == 'pyq' %}📝{% else %}🗂️{% endif %}
+                        </div>
+                        <div class="li-text">
+                            <strong>{{ item.title }}</strong>
+                            <span class="li-meta">{{ item.subject_name }} · {{ item.type.upper() }}</span>
+                        </div>
+                    </div>
+                  {% endfor %}
+                  <a href="/academics" class="see-all">See all →</a>
+                {% else %}
+                  <div class="empty-state">No uploads yet.</div>
+                {% endif %}
+            </div>
+
+            <div class="live-card" style="--dot-color:#f59e0b;">
+                <div class="live-card-header">
+                    <div class="dot"></div>
+                    <h3>Upcoming Events</h3>
+                </div>
+                {% if upcoming_events %}
+                  {% for event in upcoming_events %}
+                    <div class="live-item">
+                        <div class="li-icon">{% if event.type == 'academic' %}🧠{% else %}🎵{% endif %}</div>
+                        <div class="li-text">
+                            <strong>{{ event.title }}</strong>
+                            <span class="li-meta">
+                                {{ event.club_name }} ·
+                                {{ event.event_date.strftime('%d %b') if event.event_date else 'TBA' }}
+                            </span>
+                        </div>
+                    </div>
+                  {% endfor %}
+                  <a href="/events" class="see-all">See all →</a>
+                {% else %}
+                  <div class="empty-state">No upcoming events.</div>
+                {% endif %}
+            </div>
+
+            <div class="live-card" style="--dot-color:#3b82f6;">
+                <div class="live-card-header">
+                    <div class="dot"></div>
+                    <h3>Latest Placements</h3>
+                </div>
+                {% if latest_placements %}
+                  {% for drive in latest_placements %}
+                    <div class="live-item">
+                        <div class="li-icon">🏢</div>
+                        <div class="li-text">
+                            <strong>{{ drive.company_name }}</strong>
+                            <span class="li-meta">
+                                {{ drive.role_title }}
+                                {% if drive.package_lpa %} · ₹{{ drive.package_lpa }} LPA{% endif %}
+                            </span>
+                        </div>
+                    </div>
+                  {% endfor %}
+                  <a href="/placements" class="see-all">See all →</a>
+                {% else %}
+                  <div class="empty-state">No placement drives yet.</div>
+                {% endif %}
+            </div>
+
+        </div>
+    </div>
+
+</body>
+</html>

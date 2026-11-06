@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campus Events | CampusPlus</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/user_style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/academics.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/events.css') }}">
+</head>
+<body class="academics-app">
+
+    <!-- Top Navigation Bar with Direct Clickable Breadcrumbs -->
+    <nav class="acad-nav">
+        <div class="acad-nav-left">
+            <a href="/dashboard" class="acad-brand">Campus<span>Plus</span></a>
+            <div class="acad-breadcrumbs">
+                <a href="/dashboard">Dashboard</a>
+                <span class="separator">/</span>
+                <span class="current">Events</span>
+            </div>
+        </div>
+        <div class="acad-nav-right">
+            {% if user_email %}
+            <div class="acad-user-chip">
+                <div class="acad-user-avatar">{{ user_email[0].upper() }}</div>
+                <span>{{ user_email.split('@')[0] }}</span>
+            </div>
+            {% endif %}
+            <a href="/dashboard" class="acad-back-btn">← Dashboard</a>
+        </div>
+    </nav>
+
+    <div class="acad-container">
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flash-wrap">
+              {% for category, message in messages %}
+                <div class="flash-msg {% if category == 'success' %}msg-success{% else %}msg-danger{% endif %}">
+                  <span>{{ message }}</span>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <!-- Hero Section -->
+        <div class="acad-hero" style="background: linear-gradient(135deg, #1e1b4b 0%, #4338ca 50%, #6366f1 100%); box-shadow: 0 10px 30px -5px rgba(67, 56, 202, 0.35);">
+            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+                <div>
+                    <div class="acad-hero-badge">🎉 Campus Life &amp; Activities</div>
+                    <h1>MIT-WPU Events &amp; Hackathons</h1>
+                    <p>Discover flagship hackathons, cultural festivals, guest keynotes, sports treks, and tech summits happening across campus.</p>
+                </div>
+                {% if user_club_id %}
+                <a href="/club-head/{{ user_club_id }}" class="acad-btn-primary" style="background: rgba(255,255,255,0.18); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.3); color: #fff;">
+                    <span>+</span> Host Club Event
+                </a>
+                {% endif %}
+            </div>
+
+            <div class="acad-hero-stats">
+                <div class="acad-hero-stat-item">
+                    <span class="acad-hero-stat-num">{{ total_events }}</span>
+                    <span class="acad-hero-stat-label">Total Events</span>
+                </div>
+                <div class="acad-hero-stat-item">
+                    <span class="acad-hero-stat-num">{{ academic_count }}</span>
+                    <span class="acad-hero-stat-label">Academic &amp; Tech</span>
+                </div>
+                <div class="acad-hero-stat-item">
+                    <span class="acad-hero-stat-num">{{ social_count }}</span>
+                    <span class="acad-hero-stat-label">Cultural &amp; Social</span>
+                </div>
+                <div class="acad-hero-stat-item">
+                    <span class="acad-hero-stat-num">{{ on_campus_count }}</span>
+                    <span class="acad-hero-stat-label">On-Campus</span>
+                </div>
+                <div class="acad-hero-stat-item">
+                    <span class="acad-hero-stat-num">{{ off_campus_count }}</span>
+                    <span class="acad-hero-stat-label">Off-Campus</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search Bar & Filters -->
+        <div class="acad-search-bar-wrap">
+            <div class="acad-search-input-group">
+                <span class="acad-search-icon">🔍</span>
+                <input type="text" id="eventSearchInput" class="acad-search-input" 
+                       placeholder="Search events by title, organizing club, venue, or keywords..." 
+                       oninput="filterEvents()">
+                <span class="acad-search-kbd">/</span>
+            </div>
+
+            <div style="display: flex; gap: 14px; flex-wrap: wrap; align-items: center; justify-content: space-between;">
+                <!-- Type Filter -->
+                <div class="acad-filter-pills" id="eventTypeFilters">
+                    <button class="acad-pill active" onclick="setTypeFilter('all', this)">All Categories</button>
+                    <button class="acad-pill" onclick="setTypeFilter('academic', this)">🎓 Academic &amp; Tech</button>
+                    <button class="acad-pill" onclick="setTypeFilter('social', this)">🎉 Cultural &amp; Social</button>
+                </div>
+
+                <!-- Location Filter -->
+                <div class="acad-filter-pills" id="eventLocationFilters">
+                    <button class="acad-pill active" onclick="setLocationFilter('all', this)">All Locations</button>
+                    <button class="acad-pill" onclick="setLocationFilter('on_campus', this)">🏫 On-Campus</button>
+                    <button class="acad-pill" onclick="setLocationFilter('off_campus', this)">📍 Off-Campus</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Events Grid -->
+        <div class="events-grid" id="eventsGrid">
+            {% for event in events %}
+            <div class="event-card" 
+                 data-title="{{ event.title|lower }}" 
+                 data-desc="{{ (event.description or '')|lower }}" 
+                 data-club="{{ event.club_name|lower }}" 
+                 data-venue="{{ (event.venue or '')|lower }}" 
+                 data-type="{{ event.type }}" 
+                 data-location="{{ event.location_type }}">
+
+                <!-- Poster Banner with Overlay Badges -->
+                <div class="event-poster-wrap">
+                    {% if event.poster_url %}
+                    <img src="{{ event.poster_url }}" alt="{{ event.title }} Poster" loading="lazy">
+                    {% endif %}
+                    <div class="event-poster-overlay"></div>
+
+                    <!-- Date Badge -->
+                    <div class="event-date-chip">
+                        {% if event.event_date %}
+                        <div class="day-num">{{ event.event_date.strftime('%d') }}</div>
+                        <div class="month-txt">{{ event.event_date.strftime('%b') }}</div>
+                        {% else %}
+                        <div class="day-num">—</div>
+                        <div class="month-txt">TBA</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Category Badge -->
+                    <div class="event-poster-badges">
+                        <span class="event-type-pill {{ event.type }}">
+                            {{ event.type }}
+                        </span>
+                    </div>
+
+                    <!-- Host Club Pill -->
+                    <a href="/clubs/{{ event.club_id }}" class="event-host-pill" title="Hosted by {{ event.club_name }}">
+                        <span>🏛️</span>
+                        <span>{{ event.club_name }}</span>
+                    </a>
+                </div>
+
+                <!-- Card Body -->
+                <div class="event-body">
+                    <h2 class="event-title">{{ event.title }}</h2>
+                    <p class="event-desc">{{ event.description or 'No description provided.' }}</p>
+
+                    <div class="event-meta-info">
+                        <div class="event-meta-row">
+                            <span class="event-meta-icon">📍</span>
+                            <span>
+                                <strong>{{ event.location_type.replace('_',' ').title() }}:</strong> 
+                                {{ event.venue or 'Venue details to be announced' }}
+                            </span>
+                        </div>
+                        <div class="event-meta-row">
+                            <span class="event-meta-icon">🗓️</span>
+                            <span>
+                                {% if event.event_date %}
+                                    {{ event.event_date.strftime('%A, %b %d, %Y · %I:%M %p') }}
+                                    {% if event.end_date %}
+                                    to {{ event.end_date.strftime('%b %d, %I:%M %p') }}
+                                    {% endif %}
+                                {% else %}
+                                    Date to be announced
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="event-card-actions">
+                        {% if event.registration_link %}
+                        <a href="{{ event.registration_link }}" target="_blank" rel="noopener" class="btn-register-event">
+                            <span>Register</span>
+                            <span>↗</span>
+                        </a>
+                        {% endif %}
+                        <a href="/events/{{ event.id }}" class="btn-event-details">
+                            <span>Details</span>
+                            <span>→</span>
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+            {% else %}
+            <div class="acad-empty-state" style="grid-column: 1 / -1;">
+                <div class="acad-empty-icon">🎉</div>
+                <h3 class="acad-empty-title">No events scheduled right now</h3>
+                <p class="acad-empty-sub">Check back soon for upcoming campus fests, guest lectures, and competitions.</p>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Empty search state -->
+        <div id="noEventsMatch" class="acad-empty-state" style="display: none; margin-top: 24px;">
+            <div class="acad-empty-icon">🔎</div>
+            <h3 class="acad-empty-title">No events match your criteria</h3>
+            <p class="acad-empty-sub">Try searching with different terms or reset the category/location filters.</p>
+            <button class="acad-btn-primary" onclick="resetEventFilters()">Clear Filters</button>
+        </div>
+
+    </div>
+
+    <script>
+    let activeType = 'all';
+    let activeLocation = 'all';
+
+    function setTypeFilter(type, btn) {
+        activeType = type;
+        document.querySelectorAll('#eventTypeFilters .acad-pill').forEach(p => p.classList.remove('active'));
+        if (btn) btn.classList.add('active');
+        filterEvents();
+    }
+
+    function setLocationFilter(loc, btn) {
+        activeLocation = loc;
+        document.querySelectorAll('#eventLocationFilters .acad-pill').forEach(p => p.classList.remove('active'));
+        if (btn) btn.classList.add('active');
+        filterEvents();
+    }
+
+    function filterEvents() {
+        const query = document.getElementById('eventSearchInput').value.trim().toLowerCase();
+        const cards = document.querySelectorAll('.event-card');
+        let visibleCount = 0;
+
+        cards.forEach(card => {
+            const title   = card.getAttribute('data-title') || '';
+            const desc    = card.getAttribute('data-desc') || '';
+            const club    = card.getAttribute('data-club') || '';
+            const venue   = card.getAttribute('data-venue') || '';
+            const type    = card.getAttribute('data-type') || '';
+            const loc     = card.getAttribute('data-location') || '';
+
+            const matchQuery = !query || title.includes(query) || desc.includes(query) || club.includes(query) || venue.includes(query);
+            const matchType  = (activeType === 'all') || (type === activeType);
+            const matchLoc   = (activeLocation === 'all') || (loc === activeLocation);
+
+            if (matchQuery && matchType && matchLoc) {
+                card.style.display = 'flex';
+                visibleCount++;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        const noMatch = document.getElementById('noEventsMatch');
+        if (noMatch) {
+            noMatch.style.display = (visibleCount === 0 && cards.length > 0) ? 'flex' : 'none';
+        }
+    }
+
+    function resetEventFilters() {
+        document.getElementById('eventSearchInput').value = '';
+        setTypeFilter('all', document.querySelector('#eventTypeFilters .acad-pill'));
+        setLocationFilter('all', document.querySelector('#eventLocationFilters .acad-pill'));
+    }
+
+    // Keyboard shortcut '/' to search
+    window.addEventListener('keydown', (e) => {
+        if (e.key === '/' && document.activeElement !== document.getElementById('eventSearchInput')) {
+            e.preventDefault();
+            document.getElementById('eventSearchInput').focus();
+        }
+    });
+    </script>
+
+</body>
+</html>

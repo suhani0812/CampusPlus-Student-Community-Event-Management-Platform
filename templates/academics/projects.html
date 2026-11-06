@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Projects | {{ course.name }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/academics.css') }}">
+</head>
+<body class="academics-app">
+
+    <!-- Top Navigation Bar -->
+    <nav class="acad-nav">
+        <div class="acad-nav-left">
+            <a href="/dashboard" class="acad-brand">Campus<span>Plus</span></a>
+            <div class="acad-breadcrumbs">
+                <a href="/dashboard">Dashboard</a>
+                <span class="separator">/</span>
+                <a href="/academics">Academics</a>
+                <span class="separator">/</span>
+                <a href="/academics/{{ course.slug }}">{{ course.name }}</a>
+                <span class="separator">/</span>
+                <span class="current">Projects</span>
+            </div>
+        </div>
+        <div class="acad-nav-right">
+            {% if user_email %}
+            <div class="acad-user-chip">
+                <div class="acad-user-avatar">{{ user_email[0].upper() }}</div>
+                <span>{{ user_email.split('@')[0] }}</span>
+            </div>
+            {% endif %}
+            <a href="/academics/{{ course.slug }}" class="acad-back-btn">← Course Hub</a>
+        </div>
+    </nav>
+
+    <div class="acad-container">
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flash-wrap">
+              {% for category, message in messages %}
+                <div class="flash-msg {% if category == 'success' %}msg-success{% else %}msg-danger{% endif %}">
+                  <span>{{ message }}</span>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <!-- Quick Switcher Tabs -->
+        <div class="acad-subnav-tabs">
+            <a href="/academics/{{ course.slug }}/notes" class="acad-tab-btn">
+                📚 Notes
+            </a>
+            <a href="/academics/{{ course.slug }}/pyqs" class="acad-tab-btn">
+                📝 Previous Year Questions
+            </a>
+            <a href="/academics/{{ course.slug }}/projects" class="acad-tab-btn active tab-projects">
+                🚀 Projects
+            </a>
+        </div>
+
+        <!-- Section Header with Upload Action -->
+        <div class="acad-projects-header">
+            <div>
+                <h1 style="font-family: var(--font-heading); font-size: 1.85rem; font-weight: 800; color: var(--text-main); margin-bottom: 6px;">
+                    🚀 {{ course.name }} — Projects &amp; Capstones
+                </h1>
+                <p style="color: var(--text-muted); font-size: 0.92rem;">
+                    Browse peer-submitted software applications, AI models, hardware builds, and research papers, or upload your own work.
+                </p>
+            </div>
+            <button class="acad-btn-primary acad-btn-amber" onclick="openUploadModal()">
+                <span>+</span> Upload Project
+            </button>
+        </div>
+
+        <!-- Search Bar & Tag Filters -->
+        <div class="acad-search-bar-wrap">
+            <div class="acad-search-input-group">
+                <span class="acad-search-icon">🔍</span>
+                <input type="text" id="projectSearchInput" class="acad-search-input" 
+                       placeholder="Search projects by title, description or keywords..." 
+                       oninput="filterProjects()">
+                <span class="acad-search-kbd">/</span>
+            </div>
+
+            {% if tags %}
+            <div class="acad-filter-pills" id="projectTagFilters">
+                <button class="acad-pill active" onclick="setProjectTag('all', this)">All Tags</button>
+                {% for tag in tags %}
+                <button class="acad-pill" onclick="setProjectTag('{{ tag|lower }}', this)">#{{ tag }}</button>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Projects Grid -->
+        <div class="acad-projects-grid" id="projectsGrid">
+            {% for project in projects %}
+            <div class="acad-project-card" 
+                 data-title="{{ project.title|lower }}" 
+                 data-desc="{{ (project.description or '')|lower }}" 
+                 data-tags="{{ (project.tags or '')|lower }}">
+                
+                <div class="acad-project-card-header">
+                    <h2 class="acad-project-title">{{ project.title }}</h2>
+                    {% if project.status == 'pending' %}
+                    <span class="acad-status-pending">⏳ Under Review</span>
+                    {% endif %}
+                </div>
+
+                <p class="acad-project-desc">{{ project.description or 'No description provided.' }}</p>
+
+                {% if project.tags %}
+                <div class="acad-project-tags">
+                    {% for tag in project.tags.split(',') %}
+                    <span class="acad-tag-pill" onclick="filterByTagDirect('{{ tag.strip()|lower }}')">
+                        #{{ tag.strip() }}
+                    </span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <div class="acad-project-footer">
+                    <div class="acad-project-author">
+                        <div class="acad-author-avatar">
+                            {{ (project.uploader_name or project.uploader_email or 'U')[0].upper() }}
+                        </div>
+                        <div class="acad-author-info">
+                            <span class="acad-author-name">{{ project.uploader_name or project.uploader_email.split('@')[0] }}</span>
+                            <span class="acad-author-date">
+                                {{ project.created_at.strftime('%b %d, %Y') if project.created_at else 'Recently' }}
+                            </span>
+                        </div>
+                    </div>
+                    <a href="{{ project.file_url }}" target="_blank" rel="noopener" class="acad-project-action-link">
+                        <span>View Project</span>
+                        <span>↗</span>
+                    </a>
+                </div>
+
+            </div>
+            {% else %}
+            <div class="acad-empty-state" style="grid-column: 1 / -1;">
+                <div class="acad-empty-icon">📁</div>
+                <h3 class="acad-empty-title">No projects submitted yet</h3>
+                <p class="acad-empty-sub">Be the first student to showcase your capstone project, coursework application, or research paper!</p>
+                <button class="acad-btn-primary acad-btn-amber" onclick="openUploadModal()">
+                    + Submit Your Project
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Empty search state -->
+        <div id="noProjectsMatchState" class="acad-empty-state" style="display: none; margin-top: 24px;">
+            <div class="acad-empty-icon">🔎</div>
+            <h3 class="acad-empty-title">No matching projects found</h3>
+            <p class="acad-empty-sub">Try searching with different keywords or clear the active tag filters.</p>
+            <button class="acad-btn-primary" onclick="resetProjectSearch()">Clear Search</button>
+        </div>
+
+    </div>
+
+    <!-- Upload Project Modal -->
+    <div class="acad-modal-backdrop" id="uploadModal" onclick="closeOnBackdrop(event)">
+        <div class="acad-modal-box">
+            <div class="acad-modal-header">
+                <div class="acad-modal-title">
+                    <span>🚀</span> Submit Course Project
+                </div>
+                <button class="acad-modal-close-btn" onclick="closeUploadModal()">✕</button>
+            </div>
+
+            <form action="/academics/{{ course.slug }}/projects/upload" method="POST" enctype="multipart/form-data">
+                
+                <div class="acad-form-group">
+                    <label for="projTitle">Project Title *</label>
+                    <input type="text" id="projTitle" name="title" class="acad-form-input" 
+                           placeholder="e.g. Smart Campus Navigation App with Augmented Reality" required>
+                </div>
+
+                <div class="acad-form-group">
+                    <label for="projDesc">Description / Abstract *</label>
+                    <textarea id="projDesc" name="description" class="acad-form-textarea" 
+                              placeholder="Briefly describe what your project does, problems solved, and methodology used..." required></textarea>
+                </div>
+
+                <div class="acad-form-group">
+                    <label for="projTags">Technologies / Tags (comma-separated)</label>
+                    <input type="text" id="projTags" name="tags" class="acad-form-input" 
+                           placeholder="e.g. Python, Flutter, OpenCV, Firebase, Docker">
+                </div>
+
+                <div class="acad-form-group">
+                    <label>Project File / Documentation Archive *</label>
+                    <div class="acad-file-dropzone" id="projDropzone">
+                        <input type="file" name="content_file" id="projFileInput" 
+                               accept=".pdf,.ppt,.pptx,.doc,.docx,.zip,.rar,.tar.gz,.ipynb" 
+                               required onchange="handleFileSelected(this)">
+                        <div class="acad-dropzone-icon">📤</div>
+                        <div class="acad-dropzone-text">Click to choose file or drag &amp; drop here</div>
+                        <div class="acad-dropzone-hint">Supported: ZIP, RAR, PDF, DOCX, PPTX, IPYNB (Max 50MB)</div>
+                        <div class="acad-selected-file-name" id="selectedFileName"></div>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px;">
+                    <button type="button" class="acad-back-btn" onclick="closeUploadModal()">Cancel</button>
+                    <button type="submit" class="acad-btn-primary acad-btn-amber">Upload &amp; Submit</button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <script>
+    let activeTag = 'all';
+
+    function setProjectTag(tag, btn) {
+        activeTag = tag;
+        document.querySelectorAll('#projectTagFilters .acad-pill').forEach(p => p.classList.remove('active'));
+        if (btn) btn.classList.add('active');
+        filterProjects();
+    }
+
+    function filterByTagDirect(tag) {
+        const buttons = document.querySelectorAll('#projectTagFilters .acad-pill');
+        let matched = false;
+        buttons.forEach(btn => {
+            if (btn.innerText.toLowerCase().includes(tag)) {
+                setProjectTag(tag, btn);
+                matched = true;
+            }
+        });
+        if (!matched) {
+            document.getElementById('projectSearchInput').value = tag;
+            filterProjects();
+        }
+    }
+
+    function filterProjects() {
+        const query = document.getElementById('projectSearchInput').value.trim().toLowerCase();
+        const cards = document.querySelectorAll('.acad-project-card');
+        let visible = 0;
+
+        cards.forEach(card => {
+            const title = card.getAttribute('data-title') || '';
+            const desc  = card.getAttribute('data-desc') || '';
+            const tags  = card.getAttribute('data-tags') || '';
+
+            const matchQuery = !query || title.includes(query) || desc.includes(query) || tags.includes(query);
+            const matchTag   = (activeTag === 'all') || tags.includes(activeTag);
+
+            if (matchQuery && matchTag) {
+                card.style.display = 'flex';
+                visible++;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        const noMatch = document.getElementById('noProjectsMatchState');
+        if (noMatch) {
+            noMatch.style.display = (visible === 0 && cards.length > 0) ? 'flex' : 'none';
+        }
+    }
+
+    function resetProjectSearch() {
+        document.getElementById('projectSearchInput').value = '';
+        setProjectTag('all', document.querySelector('#projectTagFilters .acad-pill'));
+    }
+
+    function openUploadModal() {
+        document.getElementById('uploadModal').classList.add('open');
+    }
+
+    function closeUploadModal() {
+        document.getElementById('uploadModal').classList.remove('open');
+    }
+
+    function closeOnBackdrop(e) {
+        if (e.target === document.getElementById('uploadModal')) {
+            closeUploadModal();
+        }
+    }
+
+    function handleFileSelected(input) {
+        const label = document.getElementById('selectedFileName');
+        if (input.files && input.files[0]) {
+            label.innerText = '✓ Selected: ' + input.files[0].name;
+        } else {
+            label.innerText = '';
+        }
+    }
+
+    // Keyboard shortcut '/' to search
+    window.addEventListener('keydown', (e) => {
+        if (e.key === '/' && document.activeElement !== document.getElementById('projectSearchInput')) {
+            e.preventDefault();
+            document.getElementById('projectSearchInput').focus();
+        }
+    });
+    </script>
+
+</body>
+</html>
